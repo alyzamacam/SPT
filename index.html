@@ -1,4 +1,4 @@
-<!doctype html>
+<doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -9,19 +9,19 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --navy: #16202b;
-    --navy-deep: #0d141c;
-    --blue: #245fcf;
-    --blue-deep: #194896;
-    --ink: #172330;
-    --muted: #4b5968;
-    --muted-soft: #617186;
-    --line: #cfd8e3;
-    --paper: #f2f5f9;
+    --navy: #163b2d;
+    --navy-deep: #0c291e;
+    --blue: #087151;
+    --blue-deep: #07543e;
+    --ink: #163328;
+    --muted: #527064;
+    --muted-soft: #6f8b7e;
+    --line: #c5e1d4;
+    --paper: #f2faf6;
     --panel: #ffffff;
-    --surface: #e7edf4;
-    --green: #147044;
-    --green-pale: #e6f5eb;
+    --surface: #e5f3ec;
+    --green: #087151;
+    --green-pale: #e3f5e9;
     --sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
     --radius-s: 8px;
@@ -46,37 +46,37 @@
 
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --navy: #e7ecf1;
-      --navy-deep: #f2f5f8;
-      --blue: #6fa3ff;
-      --blue-deep: #9dc0ff;
-      --ink: #e9edf1;
-      --muted: #a4afba;
-      --muted-soft: #79838d;
-      --line: #2a323a;
-      --paper: #10161c;
-      --panel: #171e25;
-      --surface: #1c242c;
-      --green: #4cbb96;
-      --green-pale: #16281f;
+      --navy: #ecfaf1;
+      --navy-deep: #f7fffa;
+      --blue: #67d69a;
+      --blue-deep: #8ce3b4;
+      --ink: #eaf7ee;
+      --muted: #b4cfc0;
+      --muted-soft: #8eaa9a;
+      --line: #365a49;
+      --paper: #0d2118;
+      --panel: #173329;
+      --surface: #224438;
+      --green: #67d69a;
+      --green-pale: #1e4635;
       color-scheme: dark;
     }
   }
 
   :root[data-theme="dark"] {
-    --navy: #e7ecf1;
-    --navy-deep: #f2f5f8;
-    --blue: #6fa3ff;
-    --blue-deep: #9dc0ff;
-    --ink: #e9edf1;
-    --muted: #a4afba;
-    --muted-soft: #79838d;
-    --line: #2a323a;
-    --paper: #10161c;
-    --panel: #171e25;
-    --surface: #1c242c;
-    --green: #4cbb96;
-    --green-pale: #16281f;
+    --navy: #ecfaf1;
+    --navy-deep: #f7fffa;
+    --blue: #67d69a;
+    --blue-deep: #8ce3b4;
+    --ink: #eaf7ee;
+    --muted: #b4cfc0;
+    --muted-soft: #8eaa9a;
+    --line: #365a49;
+    --paper: #0d2118;
+    --panel: #173329;
+    --surface: #224438;
+    --green: #67d69a;
+    --green-pale: #1e4635;
     color-scheme: dark;
   }
 
@@ -225,6 +225,42 @@
     color: var(--muted);
   }
   .conn-pill.offline .conn-dot { background: var(--muted-soft); }
+  .appbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+  }
+  .theme-icon-toggle {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    flex: none;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 19px;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform .14s ease, background .18s ease, border-color .18s ease;
+  }
+  .theme-icon-toggle:hover { transform: translateY(-1px); border-color: var(--blue); }
+  .theme-icon-toggle:active { transform: scale(.94); }
+  .theme-icon-toggle:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
 
   /* ---------- Main / screens ---------- */
   main {
@@ -841,6 +877,105 @@
     border-color: var(--green);
   }
 
+  /* ---------- Field Lens visual refresh (presentation only) ---------- */
+  /* Keep document scrolling at the page level. This allows long About, history,
+     and results views to reach their final controls on every device. */
+  html { min-height: 100%; overflow-y: auto; }
+  body { min-height: 100vh; overflow-x: hidden; overflow-y: visible; }
+  body { background: radial-gradient(circle at 16% 3%, #e5f6ec 0, transparent 30%), var(--paper); }
+  :root[data-theme="dark"] body { background: radial-gradient(circle at 16% 3%, #1e4b37 0, transparent 30%), var(--paper); }
+  .app { min-height: 100vh; height: auto; overflow: visible; }
+  main { flex: 0 0 auto; min-height: auto; overflow: visible; padding-bottom: 26px; }
+  main::after { content: ""; display: block; height: calc(112px + env(safe-area-inset-bottom, 0px)); }
+  /* Original wavy larvae decorations: above the page background, but below controls. */
+  .ambient-larvae { z-index: 0; }
+  .ambient-larva { color: #147044; opacity: var(--alpha); }
+  .appbar, main, .navbar { position: relative; z-index: 1; }
+  /* The navigation stays available, while the main spacer keeps final content above it. */
+  .navbar { position: fixed; bottom: env(safe-area-inset-bottom, 0px); z-index: 20; }
+  .scan-simulation {
+    position: relative;
+    height: 180px;
+    margin: 4px 0 17px;
+    overflow: hidden;
+    border: 1px solid #8cc9ab;
+    border-radius: 22px;
+    background:
+      radial-gradient(circle at 24% 26%, #b8e6ce55 0 2px, transparent 3px),
+      radial-gradient(circle at 76% 67%, #c8f0d955 0 3px, transparent 4px),
+      radial-gradient(circle at 68% 25%, #a9dfc055 0 2px, transparent 3px),
+      linear-gradient(135deg, #073d2c, #087151 58%, #0f9267);
+    box-shadow: inset 0 0 44px #001a10aa, 0 12px 26px #08715120;
+  }
+  .scan-simulation::before {
+    content: "LIVE SCAN SIMULATION  ·  40×";
+    position: absolute; left: 15px; top: 14px; z-index: 2;
+    color: #e8fff0; font: 600 9px var(--mono); letter-spacing: .1em;
+  }
+  .scan-simulation::after {
+    content: "MODEL READY";
+    position: absolute; right: 13px; bottom: 13px; z-index: 2;
+    padding: 5px 8px; border: 1px solid #d4ffe399; border-radius: 99px;
+    background: #063a29b8; color: #e8fff0; font: 600 8px var(--mono); letter-spacing: .09em;
+  }
+  .scan-beam { position: absolute; left: 0; right: 0; top: 40%; height: 2px; background: #d7ffe7; box-shadow: 0 0 16px 5px #d7ffe788; animation: scan-beam 2.8s ease-in-out infinite alternate; }
+  .scan-frame { position: absolute; left: 22%; top: 24%; width: 56%; height: 55%; border: 1.5px solid #b6ffce; border-radius: 9px; box-shadow: 0 0 0 999px #001e1433; }
+  .scan-frame span { position:absolute; width: 11px; height: 11px; border-color:#e9fff0; border-style:solid; }
+  .scan-frame span:nth-child(1){left:-2px;top:-2px;border-width:2px 0 0 2px}.scan-frame span:nth-child(2){right:-2px;top:-2px;border-width:2px 2px 0 0}.scan-frame span:nth-child(3){left:-2px;bottom:-2px;border-width:0 0 2px 2px}.scan-frame span:nth-child(4){right:-2px;bottom:-2px;border-width:0 2px 2px 0}
+  .scan-larva { position: absolute; left: 31%; top: 40%; width: 45%; height: 56px; color: #d8ffe5; filter: drop-shadow(0 0 10px #c7ffdaaa); transform: rotate(-13deg); }
+  .scan-larva path { stroke-dasharray: 260; animation: trace-larva 2.8s ease-in-out infinite alternate; }
+  @keyframes scan-beam { from { transform: translateY(-35px); opacity: .5; } to { transform: translateY(55px); opacity: 1; } }
+  @keyframes trace-larva { from { stroke-dashoffset: 50; } to { stroke-dashoffset: 0; } }
+  @media (prefers-reduced-motion: reduce) { .scan-beam, .scan-larva path { animation: none; } }
+  .appbar {
+    padding: 16px 18px;
+    background: color-mix(in srgb, var(--panel) 92%, transparent);
+    backdrop-filter: blur(16px);
+  }
+  .mark { width: 40px; height: 40px; border-width: 2.5px; border-color: var(--blue); }
+  .mark::before { height: 17px; left: 17px; top: 9px; background: var(--blue); }
+  .mark::after { width: 17px; top: 17px; left: 9px; background: var(--blue); }
+  .brand-text h1 { font-size: 18px; letter-spacing: .5px; }
+  .brand-text p { max-width: 160px; font-size: 10px; line-height: 1.2; }
+  .conn-pill { display: none; }
+  .theme-icon-toggle { width: 42px; height: 42px; background: var(--surface); box-shadow: 0 6px 16px color-mix(in srgb, var(--blue) 12%, transparent); }
+  main { padding: 24px 18px 32px; }
+  .eyebrow { color: var(--blue-deep); font-size: 10px; letter-spacing: .12em; font-weight: 700; }
+  h2.title { font-size: 30px; letter-spacing: -.045em; line-height: 1.04; }
+  p.sub { font-size: 14px; max-width: 34ch; line-height: 1.55; }
+  .panel, .connect-card, .action, .hist-item, .connect-screen-card, .results-card, .ai-card {
+    border-radius: 20px;
+    box-shadow: 0 12px 28px color-mix(in srgb, var(--navy) 8%, transparent);
+  }
+  .connect-card { padding: 18px; background: linear-gradient(135deg, var(--panel), color-mix(in srgb, var(--green-pale) 55%, var(--panel))); }
+  .connect-card h3 { font-size: 15px; }
+  .connect-status { border-radius: 999px; padding: 7px 10px; }
+  .pipeline { margin: 16px 0 22px; gap: 5px; scrollbar-width: none; }
+  .pipeline::-webkit-scrollbar { display: none; }
+  .pipeline .step { border-radius: 999px; padding: 7px 10px; background: color-mix(in srgb, var(--surface) 75%, var(--panel)); }
+  .action { min-height: 76px; padding: 15px; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+  .action:hover { transform: translateY(-2px); box-shadow: 0 16px 28px color-mix(in srgb, var(--blue) 16%, transparent); border-color: var(--blue); }
+  .action:active, .btn:active, .navbar button:active { transform: scale(.98); }
+  .action .sym { width: 42px; height: 42px; border-radius: 14px; background: var(--green-pale); color: var(--blue); }
+  .action strong { font-size: 14px; }
+  .action span.desc { font-size: 11.5px; }
+  .action.primary { background: linear-gradient(135deg, #087151, #119568); border-color: #087151; box-shadow: 0 14px 24px #08715138; }
+  .action.primary span.desc { color: #dff8e9; }
+  .btn { border-radius: 13px; transition: transform .18s ease, box-shadow .18s ease; }
+  .btn-primary { background: linear-gradient(135deg, #087151, #119568); border-color: #087151; box-shadow: 0 12px 22px #0871512b; }
+  .navbar { margin-bottom: 10px; width: calc(100% - 24px); border: 1px solid var(--line); border-radius: 20px; padding: 8px 6px calc(8px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 12px 32px color-mix(in srgb, var(--navy) 15%, transparent); }
+  .navbar button { min-width: 48px; padding: 6px 5px; border-radius: 12px; transition: background .18s ease, color .18s ease, transform .18s ease; }
+  .navbar button.active { color: var(--blue-deep); background: var(--green-pale); }
+  .navbar button.active .ico { color: var(--blue); }
+  .explore-head { display: flex; justify-content: space-between; align-items: end; margin: 3px 2px 10px; }
+  .explore-head b { font-size: 15px; color: var(--ink); }
+  .explore-head small { color: var(--muted); font-size: 10px; }
+  .explore-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .explore-card { min-height: 120px; padding: 14px; border: 1px solid var(--line); border-radius: 18px; background: color-mix(in srgb, var(--panel) 90%, var(--green-pale)); }
+  .explore-card .explore-icon { display: grid; place-items: center; width: 30px; height: 30px; margin-bottom: 15px; border-radius: 10px; background: var(--green-pale); color: var(--blue); font-weight: 700; }
+  .explore-card b { display: block; font-size: 12px; color: var(--ink); }
+  .explore-card small { display: block; margin-top: 5px; font-size: 10px; line-height: 1.35; color: var(--muted); }
+
   /* print report (hidden on screen) */
   #print-report { display: none; }
 
@@ -918,7 +1053,14 @@
         <p>Smart Identification &amp; Portable Analysis Tool</p>
       </div>
     </div>
-    <span class="conn-pill offline" id="conn-pill"><span class="conn-dot"></span><span id="conn-pill-text">YOLO not configured</span></span>
+    <div class="appbar-actions">
+      <button class="theme-icon-toggle" id="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode">
+        <span id="theme-toggle-icon" aria-hidden="true">☀</span>
+        <span class="sr-only" id="theme-toggle-label">Switch to dark mode</span>
+        <span class="sr-only" id="theme-toggle-desc">Light mode is active</span>
+      </button>
+      <span class="conn-pill offline" id="conn-pill"><span class="conn-dot"></span><span id="conn-pill-text">YOLO not configured</span></span>
+    </div>
   </header>
 
   <main id="main">
@@ -928,6 +1070,32 @@
       <p class="eyebrow">Field Research Console</p>
       <h2 class="title">Good to scan.</h2>
       <p class="sub">Capture a water sample image, detect larvae, and log the result to your research record.</p>
+
+      <div class="scan-simulation" aria-label="Visual simulation of an AI larva scan">
+        <span class="scan-beam" aria-hidden="true"></span>
+        <div class="scan-frame" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+        <svg class="scan-larva" aria-hidden="true" viewBox="0 0 180 64" fill="none">
+          <path d="M10 37C26 9 47 61 73 33s37-23 69 3c10 8 19 6 28-2" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+          <path d="m41 30 7 11m27-17-6 12m30-12 6 12m27-5 7 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="171" cy="34" r="5" fill="currentColor"/>
+        </svg>
+      </div>
+
+      <div class="explore-head" aria-hidden="true">
+        <b>Explore SIPAT</b><small>Research, observed clearly</small>
+      </div>
+      <div class="explore-grid" aria-hidden="true">
+        <article class="explore-card">
+          <span class="explore-icon">⌁</span>
+          <b>Larval observations</b>
+          <small>Capture field evidence with a clear record.</small>
+        </article>
+        <article class="explore-card">
+          <span class="explore-icon">AI</span>
+          <b>Smart workflow</b>
+          <small>Detect, count, identify, then review.</small>
+        </article>
+      </div>
 
       <div class="connect-card">
         <div>
@@ -957,10 +1125,6 @@
         <button class="action" data-nav="about">
           <span class="sym">i</span>
           <span><strong>About SIPAT</strong><span class="desc">Research project and model information</span></span>
-        </button>
-        <button class="action" id="theme-toggle" type="button" aria-pressed="false">
-          <span class="sym" id="theme-toggle-icon" aria-hidden="true">☾</span>
-          <span><strong id="theme-toggle-label">Switch to dark mode</strong><span class="desc" id="theme-toggle-desc">Light mode is active</span></span>
         </button>
       </div>
 
@@ -1019,12 +1183,12 @@
         <p class="connect-status-sub" id="connect-status-sub">Load your Roboflow YOLO model before opening the camera.</p>
 
         <div class="field" style="text-align:left;margin-top:18px">
-          <label for="camera-facing">Camera for this scan</label>
-          <select id="camera-facing">
-            <option value="user" selected>Front camera · Make-roscope</option>
-            <option value="environment">Rear camera</option>
+          <label for="camera-device">Camera for this scan</label>
+          <select id="camera-device" aria-describedby="camera-device-help">
+            <option value="">Default camera (browser choice)</option>
           </select>
-          <p class="small">The Make-roscope is an optical accessory: align it over the phone’s front camera. No Bluetooth or electronic pairing is needed.</p>
+          <p class="small" id="camera-device-help">Built-in and USB webcams appear here after camera permission is allowed. Plug in a webcam, then use Refresh cameras.</p>
+          <button class="btn btn-ghost" type="button" id="refresh-cameras">Refresh cameras</button>
         </div>
 
         <div class="stack" id="connect-actions"></div>
@@ -1042,6 +1206,15 @@
         <video id="camera-video" autoplay playsinline muted aria-label="Live camera feed"></video>
         <canvas id="captured-canvas" aria-label="Captured camera image"></canvas>
         <div class="scanline"></div>
+      </div>
+
+      <div class="field camera-controls" style="text-align:left;margin-top:12px">
+        <label for="live-camera-device">Camera</label>
+        <select id="live-camera-device" aria-label="Choose camera for live scan">
+          <option value="">Default camera (browser choice)</option>
+        </select>
+        <button class="btn btn-ghost" type="button" id="live-refresh-cameras">Refresh cameras</button>
+        <p class="small" id="live-camera-help" role="status" aria-live="polite">Connect a webcam before or during a scan, then refresh the camera list.</p>
       </div>
 
       <div class="scan-readout">
@@ -1170,7 +1343,7 @@
           <div class="field"><label for="model-name">Roboflow model ID</label><input id="model-name" type="text" value="mosquito-larvae-dataset/22" placeholder="workspace/project/version" required></div>
           <div class="field"><label for="model-version">Project version override (optional)</label><input id="model-version" type="number" min="1" step="1" placeholder="Use the version in the model ID" ></div>
           <div class="field"><label for="publishable-key">Roboflow publishable key</label><input id="publishable-key" type="password" autocomplete="off" placeholder="rf_…" required></div>
-          <p class="small">Use a publishable key from Roboflow workspace settings, never a private API key. Settings are stored in this browser. Camera frames are analyzed in the browser and are not uploaded by this page.</p>
+          <p class="small">The app is preconfigured with a shared Roboflow publishable key, so users do not need to enter one. Use only a publishable key here, never a private API key. Camera frames are analyzed in the browser and are not uploaded by this page.</p>
           <button class="btn btn-primary" type="submit">Save model settings</button>
           <p id="model-settings-status" class="small" role="status" aria-live="polite">YOLO model not configured.</p>
         </form>
@@ -1235,7 +1408,6 @@
 
   /* ---------------- state ---------------- */
   var history = [];
-  try { history = JSON.parse(localStorage.getItem("sipat-history") || "[]"); } catch (ignore) { history = []; }
 
   var current = null;      // sample being actively scanned / viewed
   var liveDetections = [];
@@ -1245,12 +1417,23 @@
   var deviceConnected = false;
   var connectTimer = null;
   var cameraStream = null;
+  var selectedCameraId = "";
+  var cameraSwitching = false;
+  var cameraPermissionGranted = false;
+  var cameraDeviceChangeTimer = null;
   var modelConfig = null;
   var inferenceEngine = null;
   var modelWorkerId = null;
 
   /* ---------------- helpers ---------------- */
   function $(id) { return document.getElementById(id); }
+
+  // Shared browser-safe configuration for everyone using this app.
+  var defaultModelConfig = {
+    name: "mosquito-larvae-dataset/22",
+    version: null,
+    key: "rf_sSS5jYkSSVfkEmzdUUl93zAvPf53"
+  };
 
   var themePreference = "system";
   try {
@@ -1267,8 +1450,10 @@
     var nextTheme = effectiveTheme === "dark" ? "light" : "dark";
     $("theme-toggle").setAttribute("aria-pressed", effectiveTheme === "dark" ? "true" : "false");
     $("theme-toggle-label").textContent = "Switch to " + nextTheme + " mode";
+    $("theme-toggle").setAttribute("aria-label", "Switch to " + nextTheme + " mode");
+    $("theme-toggle").setAttribute("title", "Switch to " + nextTheme + " mode");
     $("theme-toggle-desc").textContent = effectiveTheme.charAt(0).toUpperCase() + effectiveTheme.slice(1) + " mode is active";
-    $("theme-toggle-icon").textContent = effectiveTheme === "dark" ? "☀" : "☾";
+    $("theme-toggle-icon").textContent = effectiveTheme === "dark" ? "☾" : "☀";
   }
   applyTheme(themePreference);
   $("theme-toggle").addEventListener("click", function () {
@@ -1284,7 +1469,16 @@
     });
   }
 
-  // Restore this browser's Roboflow settings so the user only configures them once.
+  // Start with the shared settings, then honor any custom settings saved on this browser.
+  modelConfig = {
+    name: defaultModelConfig.name,
+    version: defaultModelConfig.version,
+    key: defaultModelConfig.key
+  };
+  $("model-name").value = modelConfig.name;
+  $("model-version").value = modelConfig.version || "";
+  $("publishable-key").value = modelConfig.key;
+  $("model-settings-status").textContent = "Using the app's shared Roboflow settings. Model will load when you start a scan.";
   try {
     var savedModelConfig = JSON.parse(localStorage.getItem("sipat-model-config") || "null");
     if (savedModelConfig && typeof savedModelConfig.name === "string" && savedModelConfig.name &&
@@ -1297,7 +1491,7 @@
       $("model-name").value = modelConfig.name;
       $("model-version").value = modelConfig.version || "";
       $("publishable-key").value = modelConfig.key;
-      $("model-settings-status").textContent = "Saved settings restored from this browser. Model will load when you start a scan.";
+      $("model-settings-status").textContent = "Custom settings restored from this browser. Model will load when you start a scan.";
     }
   } catch (ignore) { /* Browser storage may be unavailable; the form remains usable. */ }
 
@@ -1327,9 +1521,33 @@
   }
 
   function saveHistory() {
-    try { localStorage.setItem("sipat-history", JSON.stringify(history)); }
-    catch (error) { toast("Could not save scan history in this browser."); }
+    if (window.sipatSavePrivateHistory) window.sipatSavePrivateHistory(history);
   }
+
+  window.sipatLoadPrivateHistory = function (records) {
+    history = records.map(function (record) {
+      var payload = record.payload || {};
+      return {
+        id: record.sample_id,
+        location: payload.location || "",
+        timestamp: payload.timestamp || record.created_at,
+        detections: payload.detections || [],
+        total: payload.total || 0,
+        avgConfidence: payload.averageConfidence || 0,
+        dominantClass: payload.dominantClass || "—",
+        reviewed: false,
+        analysisTime: "Stored result"
+      };
+    });
+    if (history.length) current = history[0];
+    renderDashboard();
+  };
+
+  window.sipatClearPrivateHistory = function () {
+    history = [];
+    current = null;
+    renderDashboard();
+  };
 
   $("model-settings-form").addEventListener("submit", function (e) {
     e.preventDefault();
@@ -1395,6 +1613,10 @@
 
   /* ---------------- navigation ---------------- */
   function showScreen(name) {
+    if (name !== "live-scan" && cameraStream) {
+      clearInterval(liveInterval);
+      stopCameraFeed();
+    }
     document.querySelectorAll(".screen").forEach(function (s) { s.classList.remove("active"); });
     var el = $("screen-" + name);
     if (el) el.classList.add("active");
@@ -1487,6 +1709,7 @@
 
   function initConnectScreen() {
     clearTimeout(connectTimer);
+    refreshCameras();
     if (deviceConnected) {
       renderConnectState("success");
     } else {
@@ -1553,13 +1776,23 @@
     });
   }
 
-  function attemptConnect() {
+  async function attemptConnect() {
     renderConnectState("connecting");
-    connectTimer = setTimeout(function () {
+    var cameraReady = false;
+    try {
+      // Requesting access here, while the user has clicked a button, lets the
+      // browser reveal real webcam names in the camera selector.
+      await prepareCameraSelection();
+      cameraReady = true;
+      await ensureYoloModel();
       deviceConnected = true;
       renderConnectionStatus();
       renderConnectState("success");
-    }, 150);
+    } catch (error) {
+      deviceConnected = false;
+      renderConnectState("failed");
+      toast(cameraReady ? (error.message || 'Could not load the YOLO model.') : cameraErrorMessage(error));
+    }
   }
 
   function cancelConnect() {
@@ -1570,6 +1803,89 @@
   }
 
   /* ---------------- live scan and browser camera ---------------- */
+  function cameraSelects() {
+    return [$('camera-device'), $('live-camera-device')].filter(Boolean);
+  }
+
+  function setCameraHelp(message) {
+    if ($('camera-device-help')) $('camera-device-help').textContent = message;
+    if ($('live-camera-help')) $('live-camera-help').textContent = message;
+  }
+
+  function cameraErrorMessage(error) {
+    if (!error) return 'Camera could not start. Check that it is connected and not being used by another app.';
+    if (error.name === 'NotAllowedError' || error.name === 'SecurityError') {
+      return 'Camera permission was denied. Allow camera access in your browser settings, then retry.';
+    }
+    if (error.name === 'NotFoundError' || error.name === 'OverconstrainedError') {
+      return 'The selected camera is unavailable. Connect the webcam, refresh the list, and choose it again.';
+    }
+    if (error.name === 'NotReadableError') {
+      return 'The camera is already being used by another app. Close that app, then retry.';
+    }
+    if (error.name === 'TypeError') {
+      return 'Camera access requires a secure page (HTTPS) or localhost.';
+    }
+    return 'Camera could not start. Check that it is connected, then retry.';
+  }
+
+  function videoConstraintsFor(deviceId) {
+    var quality = { width: { ideal: 1280 }, height: { ideal: 720 } };
+    return deviceId ? Object.assign({ deviceId: { exact: deviceId } }, quality) : quality;
+  }
+
+  async function refreshCameras() {
+    var selects = cameraSelects();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+      setCameraHelp('This browser does not support camera detection. Open the app in a current browser over HTTPS or localhost.');
+      return [];
+    }
+    try {
+      var devices = await navigator.mediaDevices.enumerateDevices();
+      var cameras = devices.filter(function (device) { return device.kind === 'videoinput'; });
+      selects.forEach(function (select) {
+        var previous = selectedCameraId || select.value;
+        select.innerHTML = '<option value="">Default camera (browser choice)</option>';
+        cameras.forEach(function (camera, index) {
+          var option = document.createElement('option');
+          option.value = camera.deviceId;
+          option.textContent = camera.label || ('Camera ' + (index + 1));
+          select.appendChild(option);
+        });
+        select.value = cameras.some(function (camera) { return camera.deviceId === previous; }) ? previous : '';
+      });
+      setCameraHelp(cameras.length
+        ? cameras.length + ' camera' + (cameras.length === 1 ? '' : 's') + ' available. Select one to switch.'
+        : 'No camera found. Connect a webcam, allow camera access, then refresh.');
+      return cameras;
+    } catch (error) {
+      setCameraHelp('Could not list cameras. Check browser permission and try refreshing.');
+      return [];
+    }
+  }
+
+  async function prepareCameraSelection() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error('This browser does not support camera access.');
+    }
+    // Open briefly and immediately release the stream. This gets permission
+    // without locking the webcam before the live-scan screen is opened.
+    var probe = await navigator.mediaDevices.getUserMedia({
+      video: videoConstraintsFor(selectedCameraId),
+      audio: false
+    });
+    cameraPermissionGranted = true;
+    probe.getTracks().forEach(function (track) { track.stop(); });
+    var cameras = await refreshCameras();
+    if (!cameras.length) throw new Error('No camera was found.');
+  }
+
+  function stopCameraFeed() {
+    if (cameraStream) cameraStream.getTracks().forEach(function (track) { track.stop(); });
+    cameraStream = null;
+    $('camera-video').srcObject = null;
+  }
+
   async function startCameraFeed() {
     var video = $("camera-video");
     var frame = $("camera-frame");
@@ -1578,19 +1894,76 @@
       throw new Error("This browser does not support camera access.");
     }
     try {
-      if (cameraStream) cameraStream.getTracks().forEach(function (track) { track.stop(); });
+      stopCameraFeed();
+      var videoConstraints = videoConstraintsFor(selectedCameraId);
       cameraStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: $("camera-facing").value || "user" }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: videoConstraints,
         audio: false
       });
       video.srcObject = cameraStream;
       await video.play();
       frame.classList.remove("captured");
       $("live-status-chip").textContent = "CAMERA LIVE · LOADING YOLO";
+      var activeTrack = cameraStream.getVideoTracks()[0];
+      if (activeTrack && activeTrack.getSettings) {
+        var activeDeviceId = activeTrack.getSettings().deviceId;
+        if (activeDeviceId) selectedCameraId = activeDeviceId;
+      }
+      await refreshCameras();
+      cameraSelects().forEach(function (select) { select.value = selectedCameraId; });
+      if (activeTrack) activeTrack.addEventListener('ended', function () {
+        if (!cameraSwitching && $('screen-live-scan').classList.contains('active')) {
+          $('live-status-chip').textContent = 'CAMERA DISCONNECTED';
+          if ($('live-camera-help')) $('live-camera-help').textContent = 'The camera disconnected. Connect a camera, refresh the list, and choose another device.';
+          refreshCameras();
+        }
+      });
     } catch (error) {
       $("live-status-chip").textContent = "CAMERA BLOCKED";
-      throw new Error("Camera access failed. Allow camera permission and open this site through HTTPS or localhost.");
+      setCameraHelp(cameraErrorMessage(error));
+      throw error;
     }
+  }
+
+  async function switchCamera(deviceId) {
+    selectedCameraId = deviceId || '';
+    cameraSwitching = true;
+    try {
+      await startCameraFeed();
+      $('live-status-chip').textContent = modelWorkerId ? 'YOLO ACTIVE' : 'CAMERA LIVE';
+    } catch (error) {
+      selectedCameraId = '';
+      await refreshCameras();
+      toast(cameraErrorMessage(error));
+    } finally {
+      cameraSwitching = false;
+    }
+  }
+
+  cameraSelects().forEach(function (select) {
+    select.addEventListener('change', function () {
+      selectedCameraId = select.value;
+      cameraSelects().forEach(function (other) { other.value = selectedCameraId; });
+      if ($('screen-live-scan').classList.contains('active')) switchCamera(selectedCameraId);
+    });
+  });
+  $('refresh-cameras').addEventListener('click', async function () {
+    if (!cameraPermissionGranted) {
+      try { await prepareCameraSelection(); }
+      catch (error) { setCameraHelp(cameraErrorMessage(error)); toast(cameraErrorMessage(error)); }
+    } else {
+      await refreshCameras();
+    }
+  });
+  $('live-refresh-cameras').addEventListener('click', refreshCameras);
+  if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+    navigator.mediaDevices.addEventListener('devicechange', function () {
+      clearTimeout(cameraDeviceChangeTimer);
+      cameraDeviceChangeTimer = setTimeout(function () {
+        refreshCameras();
+        setCameraHelp('Camera hardware changed. Choose the connected webcam from the list if needed.');
+      }, 250);
+    });
   }
 
   function captureCameraFrame() {
@@ -1624,8 +1997,7 @@
         finally { inferBusy = false; }
       }, 650);
     } catch (error) {
-      if (cameraStream) cameraStream.getTracks().forEach(function (track) { track.stop(); });
-      cameraStream = null;
+      stopCameraFeed();
       renderConnectState("failed");
       showScreen("connect");
       toast(error && error.message ? error.message : "Could not start camera or YOLO model.");
@@ -1666,7 +2038,7 @@
     clearInterval(liveInterval);
     captureCameraFrame();
     if (!$('captured-canvas').width) { toast("Camera frame is not ready yet."); return; }
-    if (cameraStream) cameraStream.getTracks().forEach(function (track) { track.stop(); });
+    stopCameraFeed();
     runProcessing();
   });
 
@@ -1889,5 +2261,6 @@
   renderDashboard();
 })();
 </script>
+<script src="auth.js"></script>
 </body>
 </html>
