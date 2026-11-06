@@ -1,0 +1,2283 @@
+<doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SIPAT — Smart Identification & Portable Analysis Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #163b2d;
+    --navy-deep: #0c291e;
+    --blue: #087151;
+    --blue-deep: #07543e;
+    --ink: #163328;
+    --muted: #527064;
+    --muted-soft: #6f8b7e;
+    --line: #c5e1d4;
+    --paper: #f2faf6;
+    --panel: #ffffff;
+    --surface: #e5f3ec;
+    --green: #087151;
+    --green-pale: #e3f5e9;
+    --sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --radius-s: 8px;
+    --radius-m: 12px;
+    color-scheme: light;
+  }
+
+  :root[data-theme="light"] .panel,
+  :root[data-theme="light"] .connect-card,
+  :root[data-theme="light"] .action:not(.primary),
+  :root[data-theme="light"] .hist-item {
+    box-shadow: 0 2px 10px rgba(24, 45, 70, .08);
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme]) .panel,
+    :root:not([data-theme]) .connect-card,
+    :root:not([data-theme]) .action:not(.primary),
+    :root:not([data-theme]) .hist-item {
+      box-shadow: 0 2px 10px rgba(24, 45, 70, .08);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --navy: #ecfaf1;
+      --navy-deep: #f7fffa;
+      --blue: #67d69a;
+      --blue-deep: #8ce3b4;
+      --ink: #eaf7ee;
+      --muted: #b4cfc0;
+      --muted-soft: #8eaa9a;
+      --line: #365a49;
+      --paper: #0d2118;
+      --panel: #173329;
+      --surface: #224438;
+      --green: #67d69a;
+      --green-pale: #1e4635;
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --navy: #ecfaf1;
+    --navy-deep: #f7fffa;
+    --blue: #67d69a;
+    --blue-deep: #8ce3b4;
+    --ink: #eaf7ee;
+    --muted: #b4cfc0;
+    --muted-soft: #8eaa9a;
+    --line: #365a49;
+    --paper: #0d2118;
+    --panel: #173329;
+    --surface: #224438;
+    --green: #67d69a;
+    --green-pale: #1e4635;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  html {
+    scroll-padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  button { font-family: inherit; }
+
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: transparent;
+    position: relative;
+    z-index: 1;
+    isolation: isolate;
+  }
+
+  /* Quiet, decorative larvae drift behind the interface. */
+  .ambient-larvae {
+    position: fixed;
+    inset: 0 auto 0 50%;
+    width: min(100vw, 480px);
+    transform: translateX(-50%);
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .ambient-larva {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    width: var(--size);
+    height: auto;
+    color: var(--green);
+    opacity: var(--alpha);
+    filter: blur(var(--softness, 0));
+    animation: larva-drift var(--duration) ease-in-out var(--delay) infinite alternate;
+  }
+  .ambient-larva__form {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: larva-wriggle var(--wriggle) ease-in-out infinite alternate;
+  }
+  .ambient-larva path,
+  .ambient-larva circle { vector-effect: non-scaling-stroke; }
+  @keyframes larva-drift {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(var(--drift-x), var(--drift-y), 0); }
+  }
+  @keyframes larva-wriggle {
+    from { transform: rotate(-9deg) translateY(1px); }
+    to { transform: rotate(9deg) translateY(-1px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ambient-larva,
+    .ambient-larva__form { animation: none; }
+    .ambient-larva { opacity: .38; }
+  }
+  @media (max-width: 380px) {
+    .ambient-larva:nth-child(even) { display: none; }
+  }
+
+  /* ---------- Header ---------- */
+  .appbar {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 18px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
+  }
+
+  .brandmark {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 2px solid var(--blue);
+    position: relative;
+    flex: none;
+  }
+  .mark::before, .mark::after {
+    content: "";
+    position: absolute;
+    background: var(--blue);
+  }
+  .mark::before { width: 2px; height: 14px; left: 15px; top: 8px; }
+  .mark::after { width: 14px; height: 2px; top: 15px; left: 8px; }
+
+  .brand-text h1 {
+    margin: 0;
+    font-size: 15px;
+    letter-spacing: .3px;
+  }
+  .brand-text p {
+    margin: 1px 0 0;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .conn-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 9px;
+    border-radius: 20px;
+    background: var(--green-pale);
+    border: 1px solid var(--line);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--green);
+    white-space: nowrap;
+  }
+  .conn-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green);
+  }
+  .conn-pill.offline {
+    background: var(--surface);
+    color: var(--muted);
+  }
+  .conn-pill.offline .conn-dot { background: var(--muted-soft); }
+  .appbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+  }
+  .theme-icon-toggle {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    flex: none;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 19px;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform .14s ease, background .18s ease, border-color .18s ease;
+  }
+  .theme-icon-toggle:hover { transform: translateY(-1px); border-color: var(--blue); }
+  .theme-icon-toggle:active { transform: scale(.94); }
+  .theme-icon-toggle:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* ---------- Main / screens ---------- */
+  main {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    padding: 18px 18px 28px;
+    padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .screen { display: none; animation: rise .28s ease; }
+  .screen.active { display: block; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .screen { animation: none; }
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    margin: 0 0 4px;
+  }
+  h2.title {
+    margin: 0 0 4px;
+    font-size: 21px;
+    color: var(--ink);
+    letter-spacing: -.2px;
+  }
+  p.sub {
+    margin: 0 0 18px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
+    padding: 16px;
+  }
+
+  .stack > * + * { margin-top: 12px; }
+
+  /* connection card */
+  .connect-card {
+    background: var(--panel);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .connect-card h3 { margin: 0 0 3px; font-size: 14px; color: var(--ink); }
+  .connect-card p { margin: 0; font-size: 11px; color: var(--muted); }
+  .connect-status {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: var(--green-pale);
+    border: 1px solid var(--line);
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+  }
+  .connect-status.offline {
+    background: var(--surface);
+    color: var(--muted);
+  }
+  .connect-status.offline .conn-dot { background: var(--muted-soft); }
+
+  /* pipeline strip */
+  .pipeline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 16px 0 22px;
+    overflow-x: auto;
+  }
+  .pipeline .step {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    padding: 6px 9px;
+    border-radius: 6px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--blue-deep);
+    white-space: nowrap;
+  }
+  .pipeline .arrow { color: var(--muted-soft); font-size: 12px; }
+
+  /* action rows */
+  .action {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
+    background: var(--panel);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .action:hover { border-color: var(--blue); }
+  .action .sym {
+    flex: none;
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+    background: var(--surface);
+    color: var(--blue);
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .action strong { display: block; font-size: 13px; }
+  .action span.desc { display: block; margin-top: 2px; font-size: 11px; color: var(--muted); }
+  .action.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .action.primary .sym { background: #ffffff26; color: #fff; }
+  .action.primary span.desc { color: #dceeff; }
+
+  .recent-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    padding: 8px 0;
+  }
+  .recent-row + .recent-row { border-top: 1px solid var(--line); }
+  .recent-row span.k { color: var(--muted); }
+  .recent-row span.v { font-family: var(--mono); font-weight: 600; }
+
+  /* buttons */
+  .btn {
+    width: 100%;
+    padding: 13px;
+    border-radius: var(--radius-s);
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+  }
+  .btn.block { display: block; }
+  .btn + .btn { margin-top: 8px; }
+  .btn-primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .btn-primary:disabled { background: #9bcbaa; border-color: #9bcbaa; cursor: not-allowed; }
+  .btn-download { background: var(--green); border-color: var(--green); color: #fff; }
+  .btn-ghost { background: transparent; }
+  .btn-back { background: transparent; border: none; color: var(--blue-deep); font-weight: 600; padding: 6px 0; font-size: 13px; cursor: pointer; }
+
+  /* form */
+  .field { display: block; margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .field input, .field textarea, .field select {
+    width: 100%;
+    padding: 11px 12px;
+    border-radius: var(--radius-s);
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 13px;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus {
+    outline: 2px solid var(--blue);
+    outline-offset: 1px;
+  }
+  .field textarea { resize: vertical; min-height: 64px; }
+
+  /* connect screen */
+  .connect-screen-card {
+    text-align: center;
+    padding: 30px 18px 24px;
+  }
+  .device-icon {
+    width: 64px; height: 64px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    display: grid;
+    place-items: center;
+    color: var(--muted-soft);
+    position: relative;
+  }
+  .device-icon::before, .device-icon::after {
+    content: "";
+    position: absolute;
+    background: currentColor;
+  }
+  .device-icon::before { width: 2px; height: 22px; top: 21px; left: 31px; }
+  .device-icon::after { width: 22px; height: 2px; top: 31px; left: 21px; }
+  .device-icon.connecting {
+    color: var(--blue);
+    animation: pulse-ring 1.1s ease-in-out infinite;
+  }
+  @keyframes pulse-ring {
+    0%, 100% { box-shadow: 0 0 0 0 #2f6fed22; }
+    50% { box-shadow: 0 0 0 8px #2f6fed11; }
+  }
+  @media (prefers-reduced-motion: reduce) { .device-icon.connecting { animation: none; } }
+  .device-icon.success {
+    color: var(--green);
+    border-color: var(--green);
+    background: var(--green-pale);
+  }
+  .device-icon.failed {
+    color: var(--muted);
+    border-color: var(--line);
+  }
+  .connect-status-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 0 0 4px;
+  }
+  .connect-status-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 0 0 22px;
+    line-height: 1.5;
+  }
+
+  /* live camera */
+  .camera-frame {
+    position: relative;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    max-height: 300px;
+    border-radius: var(--radius-m);
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at 68% 32%, #d7e2bd 0 5%, transparent 6%),
+      radial-gradient(ellipse at 30% 66%, #aebd8f 0 4%, transparent 5%),
+      radial-gradient(ellipse at 50% 50%, #cfe0ac 0 3%, transparent 4%),
+      linear-gradient(150deg, #4d6247 0%, #b7cb9d 55%, #6d8264 100%);
+    box-shadow: inset 0 0 46px #22331fa0;
+  }
+  .camera-frame video,
+  .camera-frame canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    /* Preserve the source camera ratio. Never horizontally stretch a mobile feed. */
+    object-fit: contain;
+    background: #102d20;
+  }
+  .camera-frame canvas { display: none; }
+  .camera-frame.captured video { display: none; }
+  .camera-frame.captured canvas { display: block; }
+
+  /* Phones commonly provide a portrait camera stream, so give it a taller viewfinder. */
+  @media (max-width: 600px) and (orientation: portrait) {
+    .camera-frame {
+      aspect-ratio: 3 / 4;
+      max-height: min(52dvh, 440px);
+    }
+  }
+  /* A phone held sideways uses the same wide framing as a laptop webcam. */
+  @media (max-width: 900px) and (orientation: landscape) {
+    .camera-frame { aspect-ratio: 16 / 9; max-height: min(52dvh, 300px); }
+  }
+  .camera-frame .scanline,
+  .camera-frame .det-box { z-index: 2; }
+  .scanline {
+    position: absolute; left: 0; right: 0; height: 2px;
+    background: #eaffef; box-shadow: 0 0 10px #eaffefcc;
+    top: 20%;
+    animation: scan 3.2s linear infinite;
+  }
+  @keyframes scan {
+    0% { top: 6%; }
+    50% { top: 92%; }
+    100% { top: 6%; }
+  }
+  @media (prefers-reduced-motion: reduce) { .scanline { animation: none; top: 50%; } }
+
+  .det-box {
+    position: absolute;
+    border: 2px solid #57d79f;
+    border-radius: 2px;
+    animation: pop .18s ease;
+  }
+  @keyframes pop { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .det-box .tag {
+    position: absolute; top: -17px; left: -2px;
+    background: var(--green);
+    color: #fff;
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 2px 4px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  .scan-readout {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin: 14px 0;
+  }
+  .scan-readout .num {
+    font-family: var(--mono);
+    font-size: 34px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .scan-readout .lbl { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .3px; }
+  .status-chip {
+    font-size: 10px; font-weight: 700; padding: 6px 8px; border-radius: 6px;
+    background: var(--green-pale); color: var(--green);
+  }
+
+  .capture-btn {
+    width: 76px; height: 76px;
+    margin: 6px auto 4px;
+    border-radius: 50%;
+    border: 4px solid var(--green-pale);
+    background: var(--blue);
+    color: #fff;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+  .capture-btn:active { transform: scale(.96); }
+  .capture-hint { text-align: center; font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+  /* processing */
+  .processing-wrap { text-align: center; padding: 30px 6px 10px; }
+  .spinner {
+    width: 54px; height: 54px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    border: 4px solid var(--line);
+    border-top-color: var(--blue);
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation: spin 2.4s linear infinite; } }
+  .proc-step {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 6px 0;
+    opacity: .45;
+  }
+  .proc-step.done { color: var(--green); opacity: 1; }
+  .proc-step.current { color: var(--ink); opacity: 1; font-weight: 600; }
+
+  /* results */
+  .hero-count {
+    text-align: center;
+    padding: 20px 10px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
+  }
+  .hero-count .big {
+    font-family: var(--mono);
+    font-size: 46px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .hero-count p { margin: 6px 0 0; font-size: 10px; font-weight: 700; letter-spacing: .4px; color: var(--blue-deep); }
+
+  table.det-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  table.det-table th {
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    padding: 6px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  table.det-table td {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--mono);
+  }
+  table.det-table td.cls { font-family: var(--sans); }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 14px 0;
+  }
+  .metric-box {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-s);
+    padding: 10px 12px;
+  }
+  .metric-box span { display: block; font-size: 9px; font-weight: 700; color: var(--blue-deep); letter-spacing: .3px; }
+  .metric-box b { font-family: var(--mono); font-size: 16px; color: var(--ink); }
+
+  .ai-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--green);
+  }
+  .ai-card .eyebrow { color: var(--green); }
+  .ai-card h3 { margin: 2px 0 3px; font-size: 16px; color: var(--ink); }
+  .ai-card p { margin: 0; font-size: 12px; color: var(--muted); }
+
+  .confidence-bar {
+    height: 7px;
+    border-radius: 8px;
+    background: var(--line);
+    overflow: hidden;
+    margin: 10px 0 6px;
+  }
+  .confidence-bar i { display: block; height: 100%; background: var(--green); }
+
+  .detail-list { list-style: none; margin: 8px 0 0; padding: 0; }
+  .detail-list li {
+    font-size: 12.5px;
+    line-height: 1.5;
+    padding: 10px 0;
+    border-top: 1px solid var(--line);
+    color: var(--ink);
+  }
+  .detail-list li b { color: var(--ink); }
+
+  .note-box {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--ink);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--blue);
+    padding: 11px;
+    border-radius: var(--radius-s);
+  }
+
+  .review-box {
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-s);
+    padding: 12px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .review-box.reviewed {
+    border-style: solid;
+    border-color: var(--green);
+    background: var(--green-pale);
+    color: var(--green);
+    font-weight: 600;
+  }
+
+  /* history */
+  .hist-item {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    overflow: hidden;
+  }
+  .hist-item:hover { border-color: var(--blue); }
+  .hist-open {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    padding: 13px 14px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+    color: inherit;
+  }
+  .hist-open .hid { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--ink); }
+  .hist-open .meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .hist-open .count { text-align: right; font-family: var(--mono); font-size: 18px; font-weight: 600; color: var(--blue-deep); }
+  .hist-delete {
+    flex: 0 0 auto;
+    margin-right: 10px;
+    padding: 7px 9px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-s);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .hist-delete:hover { color: #b42318; border-color: #f0b8b4; background: #fff5f4; }
+  .hist-delete:focus-visible, .hist-open:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+  .hist-item .count small { display: block; font-family: var(--sans); font-size: 8px; font-weight: 700; color: var(--muted); }
+  .hist-empty { text-align: center; padding: 40px 10px; color: var(--muted); font-size: 13px; }
+
+  /* about */
+  .about-block + .about-block { margin-top: 16px; }
+  .about-block h3 { font-size: 13px; margin: 0 0 5px; color: var(--ink); }
+  .about-block p { font-size: 12.5px; line-height: 1.55; color: var(--muted); margin: 0; }
+
+  /* bottom nav */
+  .navbar {
+    position: fixed;
+    left: 50%;
+    bottom: env(safe-area-inset-bottom, 0px);
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    justify-content: space-around;
+    background: var(--panel);
+    border-top: 1px solid var(--line);
+    padding: 9px 4px calc(9px + env(safe-area-inset-bottom, 0px));
+    z-index: 20;
+  }
+  .navbar button {
+    background: none;
+    border: none;
+    color: var(--muted-soft);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 6px;
+    cursor: pointer;
+  }
+  .navbar button .ico {
+    width: 20px; height: 20px;
+    display: grid; place-items: center;
+    font-size: 13px;
+    color: inherit;
+  }
+  .navbar button.active { color: var(--blue-deep); }
+
+  /* toast */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+    transform: translate(-50%, 12px);
+    background: var(--navy);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 10px;
+    z-index: 40;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease, transform .2s ease;
+    max-width: 90%;
+    text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* modal */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: #082818cc;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 50;
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal-sheet {
+    width: 100%;
+    max-width: 480px;
+    background: var(--panel);
+    border-radius: 18px 18px 0 0;
+    padding: 20px 18px calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+  .modal-sheet h3 { margin: 0 0 4px; font-size: 16px; color: var(--ink); }
+  .modal-sheet p.small { margin: 0 0 14px; font-size: 12px; color: var(--muted); }
+  .check-list { list-style: none; margin: 0 0 16px; padding: 0; }
+  .check-list li {
+    display: flex; gap: 9px; align-items: flex-start;
+    font-size: 12.5px;
+    padding: 8px 0;
+    border-top: 1px solid var(--line);
+    color: var(--ink);
+  }
+  .check-list li .box {
+    flex: none;
+    width: 16px; height: 16px;
+    border: 1.5px solid var(--muted-soft);
+    border-radius: 4px;
+    margin-top: 1px;
+    background: transparent;
+  }
+  .check-list li .box.checked {
+    background: var(--green);
+    border-color: var(--green);
+  }
+
+  /* ---------- Field Lens visual refresh (presentation only) ---------- */
+  /* Keep document scrolling at the page level. This allows long About, history,
+     and results views to reach their final controls on every device. */
+  html { min-height: 100%; overflow-y: auto; }
+  body { min-height: 100vh; overflow-x: hidden; overflow-y: visible; }
+  body { background: radial-gradient(circle at 16% 3%, #e5f6ec 0, transparent 30%), var(--paper); }
+  :root[data-theme="dark"] body { background: radial-gradient(circle at 16% 3%, #1e4b37 0, transparent 30%), var(--paper); }
+  .app { min-height: 100vh; height: auto; overflow: visible; }
+  main { flex: 0 0 auto; min-height: auto; overflow: visible; padding-bottom: 26px; }
+  main::after { content: ""; display: block; height: calc(112px + env(safe-area-inset-bottom, 0px)); }
+  /* Original wavy larvae decorations: above the page background, but below controls. */
+  .ambient-larvae { z-index: 0; }
+  .ambient-larva { color: #147044; opacity: var(--alpha); }
+  .appbar, main, .navbar { position: relative; z-index: 1; }
+  /* The navigation stays available, while the main spacer keeps final content above it. */
+  .navbar { position: fixed; bottom: env(safe-area-inset-bottom, 0px); z-index: 20; }
+  .scan-simulation {
+    position: relative;
+    height: 180px;
+    margin: 4px 0 17px;
+    overflow: hidden;
+    border: 1px solid #8cc9ab;
+    border-radius: 22px;
+    background:
+      radial-gradient(circle at 24% 26%, #b8e6ce55 0 2px, transparent 3px),
+      radial-gradient(circle at 76% 67%, #c8f0d955 0 3px, transparent 4px),
+      radial-gradient(circle at 68% 25%, #a9dfc055 0 2px, transparent 3px),
+      linear-gradient(135deg, #073d2c, #087151 58%, #0f9267);
+    box-shadow: inset 0 0 44px #001a10aa, 0 12px 26px #08715120;
+  }
+  .scan-simulation::before {
+    content: "LIVE SCAN SIMULATION  ·  40×";
+    position: absolute; left: 15px; top: 14px; z-index: 2;
+    color: #e8fff0; font: 600 9px var(--mono); letter-spacing: .1em;
+  }
+  .scan-simulation::after {
+    content: "MODEL READY";
+    position: absolute; right: 13px; bottom: 13px; z-index: 2;
+    padding: 5px 8px; border: 1px solid #d4ffe399; border-radius: 99px;
+    background: #063a29b8; color: #e8fff0; font: 600 8px var(--mono); letter-spacing: .09em;
+  }
+  .scan-beam { position: absolute; left: 0; right: 0; top: 40%; height: 2px; background: #d7ffe7; box-shadow: 0 0 16px 5px #d7ffe788; animation: scan-beam 2.8s ease-in-out infinite alternate; }
+  .scan-frame { position: absolute; left: 22%; top: 24%; width: 56%; height: 55%; border: 1.5px solid #b6ffce; border-radius: 9px; box-shadow: 0 0 0 999px #001e1433; }
+  .scan-frame span { position:absolute; width: 11px; height: 11px; border-color:#e9fff0; border-style:solid; }
+  .scan-frame span:nth-child(1){left:-2px;top:-2px;border-width:2px 0 0 2px}.scan-frame span:nth-child(2){right:-2px;top:-2px;border-width:2px 2px 0 0}.scan-frame span:nth-child(3){left:-2px;bottom:-2px;border-width:0 0 2px 2px}.scan-frame span:nth-child(4){right:-2px;bottom:-2px;border-width:0 2px 2px 0}
+  .scan-larva { position: absolute; left: 31%; top: 40%; width: 45%; height: 56px; color: #d8ffe5; filter: drop-shadow(0 0 10px #c7ffdaaa); transform: rotate(-13deg); }
+  .scan-larva path { stroke-dasharray: 260; animation: trace-larva 2.8s ease-in-out infinite alternate; }
+  @keyframes scan-beam { from { transform: translateY(-35px); opacity: .5; } to { transform: translateY(55px); opacity: 1; } }
+  @keyframes trace-larva { from { stroke-dashoffset: 50; } to { stroke-dashoffset: 0; } }
+  @media (prefers-reduced-motion: reduce) { .scan-beam, .scan-larva path { animation: none; } }
+  .appbar {
+    padding: 16px 18px;
+    background: color-mix(in srgb, var(--panel) 92%, transparent);
+    backdrop-filter: blur(16px);
+  }
+  .mark { width: 40px; height: 40px; border-width: 2.5px; border-color: var(--blue); }
+  .mark::before { height: 17px; left: 17px; top: 9px; background: var(--blue); }
+  .mark::after { width: 17px; top: 17px; left: 9px; background: var(--blue); }
+  .brand-text h1 { font-size: 18px; letter-spacing: .5px; }
+  .brand-text p { max-width: 160px; font-size: 10px; line-height: 1.2; }
+  .conn-pill { display: none; }
+  .theme-icon-toggle { width: 42px; height: 42px; background: var(--surface); box-shadow: 0 6px 16px color-mix(in srgb, var(--blue) 12%, transparent); }
+  main { padding: 24px 18px 32px; }
+  .eyebrow { color: var(--blue-deep); font-size: 10px; letter-spacing: .12em; font-weight: 700; }
+  h2.title { font-size: 30px; letter-spacing: -.045em; line-height: 1.04; }
+  p.sub { font-size: 14px; max-width: 34ch; line-height: 1.55; }
+  .panel, .connect-card, .action, .hist-item, .connect-screen-card, .results-card, .ai-card {
+    border-radius: 20px;
+    box-shadow: 0 12px 28px color-mix(in srgb, var(--navy) 8%, transparent);
+  }
+  .connect-card { padding: 18px; background: linear-gradient(135deg, var(--panel), color-mix(in srgb, var(--green-pale) 55%, var(--panel))); }
+  .connect-card h3 { font-size: 15px; }
+  .connect-status { border-radius: 999px; padding: 7px 10px; }
+  .pipeline { margin: 16px 0 22px; gap: 5px; scrollbar-width: none; }
+  .pipeline::-webkit-scrollbar { display: none; }
+  .pipeline .step { border-radius: 999px; padding: 7px 10px; background: color-mix(in srgb, var(--surface) 75%, var(--panel)); }
+  .action { min-height: 76px; padding: 15px; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+  .action:hover { transform: translateY(-2px); box-shadow: 0 16px 28px color-mix(in srgb, var(--blue) 16%, transparent); border-color: var(--blue); }
+  .action:active, .btn:active, .navbar button:active { transform: scale(.98); }
+  .action .sym { width: 42px; height: 42px; border-radius: 14px; background: var(--green-pale); color: var(--blue); }
+  .action strong { font-size: 14px; }
+  .action span.desc { font-size: 11.5px; }
+  .action.primary { background: linear-gradient(135deg, #087151, #119568); border-color: #087151; box-shadow: 0 14px 24px #08715138; }
+  .action.primary span.desc { color: #dff8e9; }
+  .btn { border-radius: 13px; transition: transform .18s ease, box-shadow .18s ease; }
+  .btn-primary { background: linear-gradient(135deg, #087151, #119568); border-color: #087151; box-shadow: 0 12px 22px #0871512b; }
+  .navbar { margin-bottom: 10px; width: calc(100% - 24px); border: 1px solid var(--line); border-radius: 20px; padding: 8px 6px calc(8px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 12px 32px color-mix(in srgb, var(--navy) 15%, transparent); }
+  .navbar button { min-width: 48px; padding: 6px 5px; border-radius: 12px; transition: background .18s ease, color .18s ease, transform .18s ease; }
+  .navbar button.active { color: var(--blue-deep); background: var(--green-pale); }
+  .navbar button.active .ico { color: var(--blue); }
+  .explore-head { display: flex; justify-content: space-between; align-items: end; margin: 3px 2px 10px; }
+  .explore-head b { font-size: 15px; color: var(--ink); }
+  .explore-head small { color: var(--muted); font-size: 10px; }
+  .explore-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .explore-card { min-height: 120px; padding: 14px; border: 1px solid var(--line); border-radius: 18px; background: color-mix(in srgb, var(--panel) 90%, var(--green-pale)); }
+  .explore-card .explore-icon { display: grid; place-items: center; width: 30px; height: 30px; margin-bottom: 15px; border-radius: 10px; background: var(--green-pale); color: var(--blue); font-weight: 700; }
+  .explore-card b { display: block; font-size: 12px; color: var(--ink); }
+  .explore-card small { display: block; margin-top: 5px; font-size: 10px; line-height: 1.35; color: var(--muted); }
+
+  /* print report (hidden on screen) */
+  #print-report { display: none; }
+
+  @media print {
+    body * { visibility: hidden; }
+    #print-report, #print-report * { visibility: visible; }
+    #print-report {
+      display: block;
+      position: absolute; top: 0; left: 0; right: 0;
+      padding: 30px;
+      font-family: var(--sans);
+      color: #10202e;
+    }
+    #print-report h1 { font-size: 20px; margin: 0 0 2px; color: #0b2c4d; }
+    #print-report .pr-sub { font-size: 11px; color: #5c6b7a; margin: 0 0 20px; }
+    #print-report table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+    #print-report th, #print-report td { text-align: left; padding: 6px 4px; border-bottom: 1px solid #ccc; }
+    #print-report .pr-grid { display: flex; gap: 24px; margin: 16px 0; }
+    #print-report .pr-grid div { font-size: 11px; }
+    #print-report .pr-grid b { display: block; font-size: 16px; color: #0b2c4d; }
+    #print-report .pr-insights { margin: 18px 0; padding: 12px 14px; border: 1px solid #cbd5df; border-left: 4px solid #1f8f5a; background: #f5f8fa; break-inside: avoid; }
+    #print-report .pr-insights h2 { margin: 0 0 7px; font-size: 14px; color: #0b2c4d; }
+    #print-report .pr-insights p, #print-report .pr-insights li { font-size: 11px; line-height: 1.45; }
+    #print-report .pr-insights p { margin: 0 0 6px; }
+    #print-report .pr-insights ul { margin: 0; padding-left: 18px; }
+  }
+
+  ::selection { background: #bfe2cb; }
+
+  @media (max-width: 380px) {
+    main { padding: 14px 14px 24px; padding-bottom: calc(80px + env(safe-area-inset-bottom,0px)); }
+  }
+</style>
+</head>
+<body>
+  <div class="ambient-larvae" aria-hidden="true">
+    <svg class="ambient-larva" style="--x:8%;--y:11%;--size:48px;--alpha:.66;--duration:15s;--wriggle:1.05s;--delay:-4s;--drift-x:18px;--drift-y:25px" viewBox="0 0 34 14" fill="none">
+      <g class="ambient-larva__form"><path d="M3 8C7 2 11 12 16 7s8-4 13 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="m9 6 1 3m5-3-1 3m6-4 1 3m5-2 1 2" stroke="currentColor" stroke-width=".8" stroke-linecap="round"/><circle cx="30" cy="7" r="1.7" fill="currentColor"/></g>
+    </svg>
+    <svg class="ambient-larva" style="--x:82%;--y:19%;--size:40px;--alpha:.58;--duration:18s;--wriggle:1.25s;--delay:-11s;--drift-x:-15px;--drift-y:30px" viewBox="0 0 34 14" fill="none">
+      <g class="ambient-larva__form"><path d="M3 8C7 2 11 12 16 7s8-4 13 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="m9 6 1 3m5-3-1 3m6-4 1 3m5-2 1 2" stroke="currentColor" stroke-width=".8" stroke-linecap="round"/><circle cx="30" cy="7" r="1.7" fill="currentColor"/></g>
+    </svg>
+    <svg class="ambient-larva" style="--x:14%;--y:34%;--size:38px;--alpha:.55;--duration:20s;--wriggle:1.2s;--delay:-17s;--drift-x:14px;--drift-y:-24px" viewBox="0 0 34 14" fill="none">
+      <g class="ambient-larva__form"><path d="M3 8C7 2 11 12 16 7s8-4 13 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="m9 6 1 3m5-3-1 3m6-4 1 3m5-2 1 2" stroke="currentColor" stroke-width=".8" stroke-linecap="round"/><circle cx="30" cy="7" r="1.7" fill="currentColor"/></g>
+    </svg>
+    <svg class="ambient-larva" style="--x:88%;--y:43%;--size:52px;--alpha:.64;--duration:16s;--wriggle:1.1s;--delay:-8s;--drift-x:-18px;--drift-y:-28px" viewBox="0 0 34 14" fill="none">
+      <g class="ambient-larva__form"><path d="M3 8C7 2 11 12 16 7s8-4 13 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="m9 6 1 3m5-3-1 3m6-4 1 3m5-2 1 2" stroke="currentColor" stroke-width=".8" stroke-linecap="round"/><circle cx="30" cy="7" r="1.7" fill="currentColor"/></g>
+    </svg>
+    <svg class="ambient-larva" style="--x:6%;--y:61%;--size:43px;--alpha:.6;--duration:19s;--wriggle:1s;--delay:-14s;--drift-x:20px;--drift-y:-20px" viewBox="0 0 34 14" fill="none">
+      <g class="ambient-larva__form"><path d="M3 8C7 2 11 12 16 7s8-4 13 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="m9 6 1 3m5-3-1 3m6-4 1 3m5-2 1 2" stroke="currentColor" stroke-width=".8" stroke-linecap="round"/><circle cx="30" cy="7" r="1.7" fill="currentColor"/></g>
+    </svg>
+    <svg class="ambient-larva" style="--x:78%;--y:72%;--size:39px;--alpha:.53;--duration:21s;--wriggle:1.3s;--delay:-6s;--drift-x:-15px;--drift-y:23px" viewBox="0 0 34 14" fill="none">
+      <g class="ambient-larva__form"><path d="M3 8C7 2 11 12 16 7s8-4 13 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="m9 6 1 3m5-3-1 3m6-4 1 3m5-2 1 2" stroke="currentColor" stroke-width=".8" stroke-linecap="round"/><circle cx="30" cy="7" r="1.7" fill="currentColor"/></g>
+    </svg>
+    <svg class="ambient-larva" style="--x:23%;--y:87%;--size:45px;--alpha:.59;--duration:17s;--wriggle:1.15s;--delay:-19s;--drift-x:16px;--drift-y:-26px" viewBox="0 0 34 14" fill="none">
+      <g class="ambient-larva__form"><path d="M3 8C7 2 11 12 16 7s8-4 13 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="m9 6 1 3m5-3-1 3m6-4 1 3m5-2 1 2" stroke="currentColor" stroke-width=".8" stroke-linecap="round"/><circle cx="30" cy="7" r="1.7" fill="currentColor"/></g>
+    </svg>
+    <svg class="ambient-larva" style="--x:48%;--y:6%;--size:36px;--alpha:.5;--duration:19s;--wriggle:1.3s;--delay:-9s;--drift-x:-13px;--drift-y:22px" viewBox="0 0 34 14" fill="none"><g class="ambient-larva__form"><path d="M3 8C7 2 11 12 16 7s8-4 13 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="m9 6 1 3m5-3-1 3m6-4 1 3m5-2 1 2" stroke="currentColor" stroke-width=".8" stroke-linecap="round"/><circle cx="30" cy="7" r="1.7" fill="currentColor"/></g></svg>
+    <svg class="ambient-larva" style="--x:45%;--y:24%;--size:46px;--alpha:.56;--duration:16s;--wriggle:1.05s;--delay:-15s;--drift-x:16px;--drift-y:24px" viewBox="0 0 34 14" fill="none"><g class="ambient-larva__form"><path d="M3 8C7 2 11 12 16 7s8-4 13 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="m9 6 1 3m5-3-1 3m6-4 1 3m5-2 1 2" stroke="currentColor" stroke-width=".8" stroke-linecap="round"/><circle cx="30" cy="7" r="1.7" fill="currentColor"/></g></svg>
+    <svg class="ambient-larva" style="--x:55%;--y:38%;--size:36px;--alpha:.5;--duration:22s;--wriggle:1.35s;--delay:-5s;--drift-x:-17px;--drift-y:-21px" viewBox="0 0 34 14" fill="none"><g class="ambient-larva__form"><path d="M3 8C7 2 11 12 16 7s8-4 13 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="m9 6 1 3m5-3-1 3m6-4 1 3m5-2 1 2" stroke="currentColor" stroke-width=".8" stroke-linecap="round"/><circle cx="30" cy="7" r="1.7" fill="currentColor"/></g></svg>
+    <svg class="ambient-larva" style="--x:43%;--y:52%;--size:50px;--alpha:.6;--duration:18s;--wriggle:1.1s;--delay:-12s;--drift-x:19px;--drift-y:-26px" viewBox="0 0 34 14" fill="none"><g class="ambient-larva__form"><path d="M3 8C7 2 11 12 16 7s8-4 13 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="m9 6 1 3m5-3-1 3m6-4 1 3m5-2 1 2" stroke="currentColor" stroke-width=".8" stroke-linecap="round"/><circle cx="30" cy="7" r="1.7" fill="currentColor"/></g></svg>
+    <svg class="ambient-larva" style="--x:50%;--y:67%;--size:38px;--alpha:.5;--duration:24s;--wriggle:1.4s;--delay:-18s;--drift-x:-14px;--drift-y:19px" viewBox="0 0 34 14" fill="none"><g class="ambient-larva__form"><path d="M3 8C7 2 11 12 16 7s8-4 13 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="m9 6 1 3m5-3-1 3m6-4 1 3m5-2 1 2" stroke="currentColor" stroke-width=".8" stroke-linecap="round"/><circle cx="30" cy="7" r="1.7" fill="currentColor"/></g></svg>
+    <svg class="ambient-larva" style="--x:47%;--y:79%;--size:48px;--alpha:.58;--duration:17s;--wriggle:1.05s;--delay:-7s;--drift-x:15px;--drift-y:-24px" viewBox="0 0 34 14" fill="none"><g class="ambient-larva__form"><path d="M3 8C7 2 11 12 16 7s8-4 13 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="m9 6 1 3m5-3-1 3m6-4 1 3m5-2 1 2" stroke="currentColor" stroke-width=".8" stroke-linecap="round"/><circle cx="30" cy="7" r="1.7" fill="currentColor"/></g></svg>
+    <svg class="ambient-larva" style="--x:52%;--y:94%;--size:39px;--alpha:.51;--duration:21s;--wriggle:1.25s;--delay:-16s;--drift-x:-16px;--drift-y:-20px" viewBox="0 0 34 14" fill="none"><g class="ambient-larva__form"><path d="M3 8C7 2 11 12 16 7s8-4 13 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="m9 6 1 3m5-3-1 3m6-4 1 3m5-2 1 2" stroke="currentColor" stroke-width=".8" stroke-linecap="round"/><circle cx="30" cy="7" r="1.7" fill="currentColor"/></g></svg>
+  </div>
+
+<div class="app" id="app">
+
+
+  <header class="appbar">
+    <div class="brandmark">
+      <div class="mark"></div>
+      <div class="brand-text">
+        <h1>SIPAT</h1>
+        <p>Smart Identification &amp; Portable Analysis Tool</p>
+      </div>
+    </div>
+    <div class="appbar-actions">
+      <button class="theme-icon-toggle" id="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode">
+        <span id="theme-toggle-icon" aria-hidden="true">☀</span>
+        <span class="sr-only" id="theme-toggle-label">Switch to dark mode</span>
+        <span class="sr-only" id="theme-toggle-desc">Light mode is active</span>
+      </button>
+      <span class="conn-pill offline" id="conn-pill"><span class="conn-dot"></span><span id="conn-pill-text">YOLO not configured</span></span>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <!-- ============ DASHBOARD ============ -->
+    <section class="screen active" id="screen-dashboard">
+      <p class="eyebrow">Field Research Console</p>
+      <h2 class="title">Good to scan.</h2>
+      <p class="sub">Capture a water sample image, detect larvae, and log the result to your research record.</p>
+
+      <div class="scan-simulation" aria-label="Visual simulation of an AI larva scan">
+        <span class="scan-beam" aria-hidden="true"></span>
+        <div class="scan-frame" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+        <svg class="scan-larva" aria-hidden="true" viewBox="0 0 180 64" fill="none">
+          <path d="M10 37C26 9 47 61 73 33s37-23 69 3c10 8 19 6 28-2" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+          <path d="m41 30 7 11m27-17-6 12m30-12 6 12m27-5 7 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="171" cy="34" r="5" fill="currentColor"/>
+        </svg>
+      </div>
+
+      <div class="explore-head" aria-hidden="true">
+        <b>Explore SIPAT</b><small>Research, observed clearly</small>
+      </div>
+      <div class="explore-grid" aria-hidden="true">
+        <article class="explore-card">
+          <span class="explore-icon">⌁</span>
+          <b>Larval observations</b>
+          <small>Capture field evidence with a clear record.</small>
+        </article>
+        <article class="explore-card">
+          <span class="explore-icon">AI</span>
+          <b>Smart workflow</b>
+          <small>Detect, count, identify, then review.</small>
+        </article>
+      </div>
+
+      <div class="connect-card">
+        <div>
+          <h3>YOLO model status</h3>
+          <p id="dash-connect-sub">Not connected · connect when you start a scan</p>
+        </div>
+        <span class="connect-status offline" id="dash-connect-status"><span class="conn-dot"></span>NOT CONNECTED</span>
+      </div>
+
+      <div class="pipeline">
+        <span class="step">CAPTURE</span><span class="arrow">→</span>
+        <span class="step">DETECT</span><span class="arrow">→</span>
+        <span class="step">COUNT</span><span class="arrow">→</span>
+        <span class="step">IDENTIFY</span><span class="arrow">→</span>
+        <span class="step">ANALYZE</span>
+      </div>
+
+      <div class="stack">
+        <button class="action primary" data-nav="sample-form">
+          <span class="sym">+</span>
+          <span><strong>Start scan</strong><span class="desc">Register a sample and open the live camera</span></span>
+        </button>
+        <button class="action" data-nav="history">
+          <span class="sym">≡</span>
+          <span><strong>Results history</strong><span class="desc">Open saved analyses and reports</span></span>
+        </button>
+        <button class="action" data-nav="about">
+          <span class="sym">i</span>
+          <span><strong>About SIPAT</strong><span class="desc">Research project and model information</span></span>
+        </button>
+      </div>
+
+      <p class="eyebrow" style="margin-top:22px">Latest analysis</p>
+      <div class="panel" id="dashboard-latest"></div>
+    </section>
+
+    <!-- ============ SAMPLE FORM ============ -->
+    <section class="screen" id="screen-sample-form">
+      <button class="btn-back" data-nav="dashboard">← Back</button>
+      <p class="eyebrow">Step 1 of 3</p>
+      <h2 class="title">Sample information</h2>
+      <p class="sub">Log the sample details before opening the live camera.</p>
+
+      <form id="sample-form-el">
+        <div class="field">
+          <label for="f-id">Sample ID</label>
+          <input id="f-id" type="text" required>
+        </div>
+        <div class="field">
+          <label for="f-location">Collection site</label>
+          <input id="f-location" type="text" placeholder="e.g. Creek site A, Barangay Malinis" required>
+        </div>
+        <div class="field">
+          <label for="f-operator">Collected by</label>
+          <input id="f-operator" type="text" placeholder="Researcher name" required>
+        </div>
+        <div class="field">
+          <label for="f-source">Water source type</label>
+          <select id="f-source">
+            <option>Stagnant rain catchment</option>
+            <option>Open drainage / creek</option>
+            <option>Stored household water</option>
+            <option>Discarded container</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-notes">Field notes (optional)</label>
+          <textarea id="f-notes" placeholder="Weather, turbidity, visible debris, etc."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Continue</button>
+      </form>
+    </section>
+
+    <!-- ============ CONNECT TO MAKERSCOPE ============ -->
+    <section class="screen" id="screen-connect">
+      <button class="btn-back" id="connect-back">← Back</button>
+      <p class="eyebrow">Step 2 of 3 · <span id="connect-sample-id"></span></p>
+      <h2 class="title">Prepare scan</h2>
+      <p class="sub">Use your browser camera and run the configured mosquito-larvae YOLO model on each frame.</p>
+
+      <div class="panel connect-screen-card">
+        <div class="device-icon" id="device-icon"></div>
+        <p class="connect-status-text" id="connect-status-text">Not connected</p>
+        <p class="connect-status-sub" id="connect-status-sub">Load your Roboflow YOLO model before opening the camera.</p>
+
+        <div class="field" style="text-align:left;margin-top:18px">
+          <label for="camera-device">Camera for this scan</label>
+          <select id="camera-device" aria-describedby="camera-device-help">
+            <option value="">Default camera (browser choice)</option>
+          </select>
+          <p class="small" id="camera-device-help">Built-in and USB webcams appear here after camera permission is allowed. Plug in a webcam, then use Refresh cameras.</p>
+          <button class="btn btn-ghost" type="button" id="refresh-cameras">Refresh cameras</button>
+        </div>
+
+        <div class="stack" id="connect-actions"></div>
+      </div>
+    </section>
+
+    <!-- ============ LIVE SCAN ============ -->
+    <section class="screen" id="screen-live-scan">
+      <button class="btn-back" data-nav="connect">← Back</button>
+      <p class="eyebrow">Step 3 of 3 · <span id="live-sample-id"></span></p>
+      <h2 class="title">Live scan</h2>
+      <p class="sub">Hold the camera steady over the sample. YOLO detections are shown as the model analyzes each frame.</p>
+
+      <div class="camera-frame" id="camera-frame">
+        <video id="camera-video" autoplay playsinline muted aria-label="Live camera feed"></video>
+        <canvas id="captured-canvas" aria-label="Captured camera image"></canvas>
+        <div class="scanline"></div>
+      </div>
+
+      <div class="field camera-controls" style="text-align:left;margin-top:12px">
+        <label for="live-camera-device">Camera</label>
+        <select id="live-camera-device" aria-label="Choose camera for live scan">
+          <option value="">Default camera (browser choice)</option>
+        </select>
+        <button class="btn btn-ghost" type="button" id="live-refresh-cameras">Refresh cameras</button>
+        <p class="small" id="live-camera-help" role="status" aria-live="polite">Connect a webcam before or during a scan, then refresh the camera list.</p>
+      </div>
+
+      <div class="scan-readout">
+        <div>
+          <div class="lbl">OBJECTS TRACKED</div>
+          <div class="num" id="live-count">0</div>
+        </div>
+        <span class="status-chip" id="live-status-chip">ANALYSIS ACTIVE</span>
+      </div>
+
+      <button class="capture-btn" id="capture-btn">CAPTURE</button>
+      <p class="capture-hint">Capture a frame to save its real model predictions. Zero detections can also be recorded.</p>
+    </section>
+
+    <!-- ============ PROCESSING ============ -->
+    <section class="screen" id="screen-processing">
+      <div class="processing-wrap">
+        <div class="spinner"></div>
+        <h2 class="title" style="margin-bottom:2px">Analyzing capture</h2>
+        <p class="sub" style="margin-bottom:18px">Running detection and classification on the captured frame.</p>
+        <div class="proc-step" id="proc-1">Segmenting captured image</div>
+        <div class="proc-step" id="proc-2">Localizing larval objects</div>
+        <div class="proc-step" id="proc-3">Scoring detection confidence</div>
+        <div class="proc-step" id="proc-4">Compiling results record</div>
+      </div>
+    </section>
+
+    <!-- ============ RESULTS ============ -->
+    <section class="screen" id="screen-results">
+      <button class="btn-back" id="results-back">← Back</button>
+      <p class="eyebrow"><span id="res-sample-id"></span> · <span id="res-timestamp"></span></p>
+      <h2 class="title">Detection results</h2>
+
+      <div class="hero-count">
+        <div class="big" id="res-total">0</div>
+        <p>TOTAL LARVAE DETECTED</p>
+      </div>
+
+      <p class="eyebrow" style="margin-top:18px">Detection log</p>
+      <div class="panel">
+        <table class="det-table">
+          <thead><tr><th>Detection</th><th>Confidence</th><th>Class</th></tr></thead>
+          <tbody id="res-table-body"></tbody>
+        </table>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-box"><span>AVG CONFIDENCE</span><b id="res-avg-conf">—</b></div>
+        <div class="metric-box"><span>ANALYSIS TIME</span><b id="res-time">—</b></div>
+      </div>
+
+      <div class="panel ai-card">
+        <p class="eyebrow">AI information</p>
+        <h3 id="res-dominant">—</h3>
+        <p>Model-supported classification · <span id="res-dominant-conf">—</span> confidence</p>
+        <button class="btn btn-ghost" style="margin-top:10px" data-nav="ai-details">View AI details</button>
+      </div>
+
+      <div class="stack" style="margin-top:18px">
+        <button class="btn btn-download" id="btn-download-pdf">Download results (PDF)</button>
+        <button class="btn" id="btn-download-csv">Save results data (CSV)</button>
+        <button class="btn" id="btn-open-review">Open manual review</button>
+      </div>
+    </section>
+
+    <!-- ============ AI DETAILS ============ -->
+    <section class="screen" id="screen-ai-details">
+      <button class="btn-back" data-nav="results">← Back to results</button>
+      <p class="eyebrow">Model output</p>
+      <h2 class="title">AI information</h2>
+
+      <div class="panel ai-card">
+        <p class="eyebrow">Model-supported identification</p>
+        <h3 id="ai-class">—</h3>
+        <p>Dominant trained-model class for this capture</p>
+        <div class="confidence-bar"><i id="ai-conf-bar" style="width:0%"></i></div>
+        <p style="font-weight:700;color:var(--navy);margin-top:4px" id="ai-conf-text">—</p>
+      </div>
+
+      <p class="eyebrow" style="margin-top:18px">Detection explanation</p>
+      <div class="panel">
+        <ul class="detail-list" id="ai-explanation-list"></ul>
+      </div>
+
+      <div class="note-box" style="margin-top:14px">
+        Manual review is advised when confidence is low or image morphology is unclear. This model is limited to its trained classes and is a research aid, not a diagnostic instrument.
+      </div>
+
+      <div class="stack" style="margin-top:16px">
+        <button class="btn" id="ai-open-review">Open manual review</button>
+        <button class="btn btn-download" id="ai-download-pdf">Download results (PDF)</button>
+      </div>
+    </section>
+
+    <!-- ============ HISTORY ============ -->
+    <section class="screen" id="screen-history">
+      <button class="btn-back" data-nav="dashboard">← Back</button>
+      <p class="eyebrow">Saved records</p>
+      <h2 class="title">Results history</h2>
+      <p class="sub">Every captured sample from this device, most recent first.</p>
+      <div class="stack" id="history-list"></div>
+    </section>
+
+    <!-- ============ ABOUT ============ -->
+    <section class="screen" id="screen-about">
+      <button class="btn-back" data-nav="dashboard">← Back</button>
+      <p class="eyebrow">Research project</p>
+      <h2 class="title">About SIPAT</h2>
+
+      <div class="about-block">
+        <h3>What SIPAT does</h3>
+        <p>SIPAT — Smart Identification and Portable Analysis Tool — uses a browser camera and a configured YOLO model to help field researchers capture, count, and provisionally classify mosquito larvae in water samples during vector surveillance work.</p>
+      </div>
+      <div class="about-block">
+        <h3>Workflow</h3>
+        <p>Capture → Detect → Count → Identify → Analyze → Download results. Scan records are saved in this browser for later review; captured frames are not retained by the page.</p>
+      </div>
+      <div class="about-block">
+        <h3>Model scope &amp; limitations</h3>
+        <p>The selected species detector reports Aedes, Anopheles, or Culex. Other species may be missed or misclassified, so treat low-confidence results as uncertain and send ambiguous specimens for manual review. SIPAT is a research aid, not a diagnostic or regulatory instrument.</p>
+      </div>
+      <div class="about-block">
+        <h3>YOLO model settings</h3>
+        <p>SIPAT now defaults to a published species detector for Aedes, Anopheles, and Culex. It runs in this browser using Inference.js. See the <a href="https://universe.roboflow.com/thesis-ormgx/mosquito-larvae-dataset" target="_blank" rel="noopener noreferrer">species dataset and model</a>.</p>
+        <form id="model-settings-form" class="panel" style="margin-top:12px">
+          <div class="field"><label for="model-name">Roboflow model ID</label><input id="model-name" type="text" value="mosquito-larvae-dataset/22" placeholder="workspace/project/version" required></div>
+          <div class="field"><label for="model-version">Project version override (optional)</label><input id="model-version" type="number" min="1" step="1" placeholder="Use the version in the model ID" ></div>
+          <div class="field"><label for="publishable-key">Roboflow publishable key</label><input id="publishable-key" type="password" autocomplete="off" placeholder="rf_…" required></div>
+          <p class="small">The app is preconfigured with a shared Roboflow publishable key, so users do not need to enter one. Use only a publishable key here, never a private API key. Camera frames are analyzed in the browser and are not uploaded by this page.</p>
+          <button class="btn btn-primary" type="submit">Save model settings</button>
+          <p id="model-settings-status" class="small" role="status" aria-live="polite">YOLO model not configured.</p>
+        </form>
+      </div>
+      <div class="about-block">
+        <h3>Prototype build</h3>
+        <p>Enter your Roboflow publishable key and keep the model ID set to <b>mosquito-larvae-dataset/22</b> for Aedes/Anopheles/Culex identification. Camera access requires HTTPS or localhost.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <nav class="navbar" id="navbar">
+    <button data-nav="dashboard" data-tab="dashboard"><span class="ico">⌂</span>Home</button>
+    <button data-nav="sample-form" data-tab="scan"><span class="ico">◎</span>Scan</button>
+    <button data-nav="results" data-tab="results"><span class="ico">▤</span>Results</button>
+    <button data-nav="history" data-tab="history"><span class="ico">≡</span>History</button>
+    <button data-nav="about" data-tab="about"><span class="ico">i</span>About</button>
+  </nav>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="modal-backdrop" id="review-modal">
+    <div class="modal-sheet">
+      <h3>Manual review checklist</h3>
+      <p class="small">Confirm the following before signing off on this detection record.</p>
+      <ul class="check-list">
+        <li><span class="box"></span>Bounding boxes align with visible larval bodies, not debris or bubbles.</li>
+        <li><span class="box"></span>Low-confidence detections (under 85%) have been visually double-checked.</li>
+        <li><span class="box"></span>Sample ID, site, and collection notes are complete and accurate.</li>
+        <li><span class="box"></span>Any ambiguous specimens are flagged in field notes for lab follow-up.</li>
+      </ul>
+      <button class="btn btn-primary" id="mark-reviewed">Mark as reviewed</button>
+      <button class="btn btn-ghost" id="close-review">Close</button>
+    </div>
+  </div>
+
+  <div id="print-report">
+    <h1>SIPAT Detection Report</h1>
+    <p class="pr-sub" id="pr-sub"></p>
+    <div class="pr-grid">
+      <div><b id="pr-total">0</b>Total detected</div>
+      <div><b id="pr-avg">—</b>Avg. confidence</div>
+      <div><b id="pr-class">—</b>Dominant class</div>
+    </div>
+    <section class="pr-insights">
+      <h2>AI insights</h2>
+      <p id="pr-insight-summary"></p>
+      <ul id="pr-insight-list"></ul>
+    </section>
+    <table>
+      <thead><tr><th>Detection</th><th>Confidence</th><th>Class</th></tr></thead>
+      <tbody id="pr-table-body"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------------- state ---------------- */
+  var history = [];
+
+  var current = null;      // sample being actively scanned / viewed
+  var liveDetections = [];
+  var liveInterval = null;
+  var viewingFromHistory = false;
+  var reviewTarget = null;
+  var deviceConnected = false;
+  var connectTimer = null;
+  var cameraStream = null;
+  var selectedCameraId = "";
+  var cameraSwitching = false;
+  var cameraPermissionGranted = false;
+  var cameraDeviceChangeTimer = null;
+  var modelConfig = null;
+  var inferenceEngine = null;
+  var modelWorkerId = null;
+
+  /* ---------------- helpers ---------------- */
+  function $(id) { return document.getElementById(id); }
+
+  // Shared browser-safe configuration for everyone using this app.
+  var defaultModelConfig = {
+    name: "mosquito-larvae-dataset/22",
+    version: null,
+    key: "rf_sSS5jYkSSVfkEmzdUUl93zAvPf53"
+  };
+
+  var themePreference = "system";
+  try {
+    var storedTheme = localStorage.getItem("sipat-theme");
+    if (storedTheme === "light" || storedTheme === "dark") themePreference = storedTheme;
+  } catch (ignore) { /* Fall back to the device color preference. */ }
+  function applyTheme(preference) {
+    themePreference = preference;
+    if (preference === "system") document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme", preference);
+    var effectiveTheme = preference === "system"
+      ? (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+      : preference;
+    var nextTheme = effectiveTheme === "dark" ? "light" : "dark";
+    $("theme-toggle").setAttribute("aria-pressed", effectiveTheme === "dark" ? "true" : "false");
+    $("theme-toggle-label").textContent = "Switch to " + nextTheme + " mode";
+    $("theme-toggle").setAttribute("aria-label", "Switch to " + nextTheme + " mode");
+    $("theme-toggle").setAttribute("title", "Switch to " + nextTheme + " mode");
+    $("theme-toggle-desc").textContent = effectiveTheme.charAt(0).toUpperCase() + effectiveTheme.slice(1) + " mode is active";
+    $("theme-toggle-icon").textContent = effectiveTheme === "dark" ? "☾" : "☀";
+  }
+  applyTheme(themePreference);
+  $("theme-toggle").addEventListener("click", function () {
+    var activeTheme = themePreference === "system"
+      ? (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+      : themePreference;
+    applyTheme(activeTheme === "dark" ? "light" : "dark");
+    try { localStorage.setItem("sipat-theme", themePreference); } catch (ignore) {}
+  });
+  if (window.matchMedia) {
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () {
+      if (themePreference === "system") applyTheme("system");
+    });
+  }
+
+  // Start with the shared settings, then honor any custom settings saved on this browser.
+  modelConfig = {
+    name: defaultModelConfig.name,
+    version: defaultModelConfig.version,
+    key: defaultModelConfig.key
+  };
+  $("model-name").value = modelConfig.name;
+  $("model-version").value = modelConfig.version || "";
+  $("publishable-key").value = modelConfig.key;
+  $("model-settings-status").textContent = "Using the app's shared Roboflow settings. Model will load when you start a scan.";
+  try {
+    var savedModelConfig = JSON.parse(localStorage.getItem("sipat-model-config") || "null");
+    if (savedModelConfig && typeof savedModelConfig.name === "string" && savedModelConfig.name &&
+        typeof savedModelConfig.key === "string" && savedModelConfig.key) {
+      modelConfig = {
+        name: savedModelConfig.name,
+        version: Number(savedModelConfig.version) || null,
+        key: savedModelConfig.key
+      };
+      $("model-name").value = modelConfig.name;
+      $("model-version").value = modelConfig.version || "";
+      $("publishable-key").value = modelConfig.key;
+      $("model-settings-status").textContent = "Custom settings restored from this browser. Model will load when you start a scan.";
+    }
+  } catch (ignore) { /* Browser storage may be unavailable; the form remains usable. */ }
+
+  function toast(msg) {
+    var t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { t.classList.remove("show"); }, 2200);
+  }
+
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+
+  function nowStamp() {
+    var d = new Date();
+    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    var h = d.getHours();
+    var ampm = h >= 12 ? "PM" : "AM";
+    var h12 = h % 12 || 12;
+    return months[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear() +
+      " · " + h12 + ":" + pad(d.getMinutes()) + " " + ampm;
+  }
+
+  function nextSampleId() {
+    var n = 48 + history.length;
+    return "SIPAT-2026-" + n;
+  }
+
+  function saveHistory() {
+    if (window.sipatSavePrivateHistory) window.sipatSavePrivateHistory(history);
+  }
+
+  window.sipatLoadPrivateHistory = function (records) {
+    history = records.map(function (record) {
+      var payload = record.payload || {};
+      return {
+        id: record.sample_id,
+        location: payload.location || "",
+        timestamp: payload.timestamp || record.created_at,
+        detections: payload.detections || [],
+        total: payload.total || 0,
+        avgConfidence: payload.averageConfidence || 0,
+        dominantClass: payload.dominantClass || "—",
+        reviewed: false,
+        analysisTime: "Stored result"
+      };
+    });
+    if (history.length) current = history[0];
+    renderDashboard();
+  };
+
+  window.sipatClearPrivateHistory = function () {
+    history = [];
+    current = null;
+    renderDashboard();
+  };
+
+  $("model-settings-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    modelConfig = {
+      name: $("model-name").value.trim(),
+      version: Number($("model-version").value) || null,
+      key: $("publishable-key").value.trim()
+    };
+    if (!modelConfig.name || !modelConfig.key || (modelConfig.version !== null && (!Number.isInteger(modelConfig.version) || modelConfig.version < 1))) {
+      modelConfig = null;
+      $("model-settings-status").textContent = "Enter a model ID, positive version number, and publishable key.";
+      return;
+    }
+    modelWorkerId = null;
+    inferenceEngine = null;
+    try {
+      localStorage.setItem("sipat-model-config", JSON.stringify(modelConfig));
+      $("model-settings-status").textContent = "Settings saved on this browser. Model will load when you start a scan.";
+    } catch (error) {
+      $("model-settings-status").textContent = "Settings saved for this session, but this browser could not store them.";
+    }
+    renderConnectionStatus();
+    toast("YOLO model settings saved.");
+  });
+
+  async function ensureYoloModel() {
+    if (!modelConfig) throw new Error("Configure the Roboflow YOLO model in About → YOLO model settings first.");
+    if (modelWorkerId != null) return;
+    $("model-settings-status").textContent = "Loading model…";
+    var sdk = await import("https://cdn.jsdelivr.net/npm/inferencejs@1.3.0/+esm");
+    var Engine = sdk.InferenceEngine || (sdk.default && sdk.default.InferenceEngine);
+    if (!Engine) throw new Error("Could not load Roboflow Inference.js. Check your internet connection.");
+    inferenceEngine = new Engine();
+    var versionedId = modelConfig.name.match(/^(.+)\/(\d+)$/);
+    if ((modelConfig.version || versionedId) && inferenceEngine.startWorker) {
+      var projectName = modelConfig.version ? modelConfig.name : versionedId[1];
+      var projectVersion = modelConfig.version || Number(versionedId[2]);
+      modelWorkerId = await inferenceEngine.startWorker(projectName, projectVersion, modelConfig.key);
+    } else if (inferenceEngine.startWorkerByModelId) {
+      modelWorkerId = await inferenceEngine.startWorkerByModelId(modelConfig.name, modelConfig.key);
+    } else {
+      throw new Error("This Roboflow model needs a supported model ID or legacy version.");
+    }
+    $("model-settings-status").textContent = "YOLO model loaded and ready.";
+  }
+
+  function summarize(dets) {
+    if (!dets.length) {
+      return { avg: 0, dominant: "—" };
+    }
+    var sum = 0, counts = {};
+    dets.forEach(function (d) {
+      sum += d.conf;
+      counts[d.cls] = (counts[d.cls] || 0) + 1;
+    });
+    var dominant = Object.keys(counts)[0];
+    var best = -1;
+    Object.keys(counts).forEach(function (k) {
+      if (counts[k] > best) { best = counts[k]; dominant = k; }
+    });
+    return { avg: Math.round((sum / dets.length) * 10) / 10, dominant: dominant };
+  }
+
+  /* ---------------- navigation ---------------- */
+  function showScreen(name) {
+    if (name !== "live-scan" && cameraStream) {
+      clearInterval(liveInterval);
+      stopCameraFeed();
+    }
+    document.querySelectorAll(".screen").forEach(function (s) { s.classList.remove("active"); });
+    var el = $("screen-" + name);
+    if (el) el.classList.add("active");
+    document.querySelectorAll(".navbar button").forEach(function (b) {
+      b.classList.toggle("active", b.dataset.tab === name || (name === "sample-form" && b.dataset.tab === "scan") || (name === "connect" && b.dataset.tab === "scan") || (name === "ai-details" && b.dataset.tab === "results") || (name === "processing" && b.dataset.tab === "scan") || (name === "live-scan" && b.dataset.tab === "scan"));
+    });
+    $("main").scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+    window.scrollTo(0, 0);
+
+    if (name === "dashboard") renderDashboard();
+    if (name === "history") renderHistory();
+    if (name === "sample-form") prefillForm();
+  }
+
+  document.addEventListener("click", function (e) {
+    var navEl = e.target.closest("[data-nav]");
+    if (navEl) {
+      var target = navEl.getAttribute("data-nav");
+      if (target === "results" && !current) { toast("Run a scan first to view results."); return; }
+      if (target === "ai-details" && !current) { toast("Run a scan first."); return; }
+      showScreen(target);
+    }
+  });
+
+  /* ---------------- connection status (shared) ---------------- */
+  function renderConnectionStatus() {
+    var pill = $("conn-pill");
+    var pillText = $("conn-pill-text");
+    var dashStatus = $("dash-connect-status");
+    var dashSub = $("dash-connect-sub");
+
+    if (modelConfig) {
+      pill.classList.remove("offline");
+      pillText.textContent = "YOLO model configured";
+      dashStatus.classList.remove("offline");
+      dashStatus.innerHTML = '<span class="conn-dot"></span>MODEL CONFIGURED';
+      dashSub.textContent = "Roboflow model · browser inference";
+    } else {
+      pill.classList.add("offline");
+      pillText.textContent = "YOLO not configured";
+      dashStatus.classList.add("offline");
+      dashStatus.innerHTML = '<span class="conn-dot"></span>NOT CONFIGURED';
+      dashSub.textContent = "Add a Roboflow model ID and publishable key in About";
+    }
+  }
+
+  /* ---------------- dashboard ---------------- */
+  function renderDashboard() {
+    var box = $("dashboard-latest");
+    if (!history.length) {
+      box.innerHTML = '<p style="margin:0;font-size:12px;color:var(--muted)">No analyses yet. Start a scan to build your first record.</p>';
+      return;
+    }
+    var last = history[0];
+    box.innerHTML =
+      '<div class="recent-row"><span class="k">Sample ID</span><span class="v">' + last.id + '</span></div>' +
+      '<div class="recent-row"><span class="k">Larvae detected</span><span class="v">' + last.total + '</span></div>' +
+      '<div class="recent-row"><span class="k">Dominant class</span><span class="v">' + last.dominantClass + '</span></div>';
+  }
+
+  /* ---------------- sample form ---------------- */
+  function prefillForm() {
+    $("f-id").value = nextSampleId();
+    $("f-location").value = "";
+    $("f-operator").value = "";
+    $("f-notes").value = "";
+  }
+
+  $("sample-form-el").addEventListener("submit", function (e) {
+    e.preventDefault();
+    current = {
+      id: $("f-id").value.trim() || nextSampleId(),
+      location: $("f-location").value.trim(),
+      operator: $("f-operator").value.trim(),
+      source: $("f-source").value,
+      notes: $("f-notes").value.trim(),
+      timestamp: nowStamp()
+    };
+    viewingFromHistory = false;
+    $("connect-sample-id").textContent = current.id;
+    showScreen("connect");
+    initConnectScreen();
+  });
+
+  /* ---------------- connect to MakerScope ---------------- */
+  $("connect-back").addEventListener("click", function () {
+    clearTimeout(connectTimer);
+    showScreen("sample-form");
+  });
+
+  function initConnectScreen() {
+    clearTimeout(connectTimer);
+    refreshCameras();
+    if (deviceConnected) {
+      renderConnectState("success");
+    } else {
+      renderConnectState("idle");
+    }
+  }
+
+  function renderConnectState(state) {
+    var icon = $("device-icon");
+    var text = $("connect-status-text");
+    var sub = $("connect-status-sub");
+    var actions = $("connect-actions");
+    icon.className = "device-icon";
+    actions.innerHTML = "";
+
+    if (state === "idle") {
+      text.textContent = "Not connected";
+      sub.textContent = "The browser camera will open and the configured YOLO model will load for this scan.";
+      actions.innerHTML =
+        '<button class="btn btn-primary" id="btn-connect">Prepare camera and YOLO</button>' +
+        '<button class="btn btn-ghost" data-nav="about">Configure YOLO model</button>' +
+        '<button class="btn btn-ghost" id="btn-cancel-connect">Cancel</button>';
+    }
+
+    if (state === "connecting") {
+      icon.classList.add("connecting");
+      text.textContent = "Connecting…";
+      sub.textContent = "Opening the camera and loading the Roboflow model in this browser.";
+      actions.innerHTML = '<button class="btn btn-ghost" id="btn-cancel-connect">Cancel</button>';
+    }
+
+    if (state === "success") {
+      icon.classList.add("success");
+      text.textContent = "Ready to scan";
+      sub.textContent = "Camera access and YOLO model are ready.";
+      actions.innerHTML = '<button class="btn btn-primary" id="btn-continue-scan">Continue to live scan</button>';
+    }
+
+    if (state === "failed") {
+      icon.classList.add("failed");
+      text.textContent = "Couldn't connect";
+      sub.textContent = "Could not start the camera or model. Check your model settings and browser permissions.";
+      actions.innerHTML =
+        '<button class="btn btn-primary" id="btn-connect">Retry setup</button>' +
+        '<button class="btn btn-ghost" data-nav="about">Configure YOLO model</button>' +
+        '<button class="btn btn-ghost" id="btn-cancel-connect">Cancel</button>';
+    }
+
+    bindConnectActions();
+  }
+
+  function bindConnectActions() {
+    var connectBtn = $("btn-connect");
+    var cancelBtn = $("btn-cancel-connect");
+    var continueBtn = $("btn-continue-scan");
+
+    if (connectBtn) connectBtn.addEventListener("click", attemptConnect);
+    if (cancelBtn) cancelBtn.addEventListener("click", cancelConnect);
+    if (continueBtn) continueBtn.addEventListener("click", async function () {
+      viewingFromHistory = false;
+      $("live-sample-id").textContent = current.id;
+      showScreen("live-scan");
+      await startLiveScan();
+    });
+  }
+
+  async function attemptConnect() {
+    renderConnectState("connecting");
+    var cameraReady = false;
+    try {
+      // Requesting access here, while the user has clicked a button, lets the
+      // browser reveal real webcam names in the camera selector.
+      await prepareCameraSelection();
+      cameraReady = true;
+      await ensureYoloModel();
+      deviceConnected = true;
+      renderConnectionStatus();
+      renderConnectState("success");
+    } catch (error) {
+      deviceConnected = false;
+      renderConnectState("failed");
+      toast(cameraReady ? (error.message || 'Could not load the YOLO model.') : cameraErrorMessage(error));
+    }
+  }
+
+  function cancelConnect() {
+    clearTimeout(connectTimer);
+    current = null;
+    showScreen("dashboard");
+    toast("Scan cancelled.");
+  }
+
+  /* ---------------- live scan and browser camera ---------------- */
+  function cameraSelects() {
+    return [$('camera-device'), $('live-camera-device')].filter(Boolean);
+  }
+
+  function setCameraHelp(message) {
+    if ($('camera-device-help')) $('camera-device-help').textContent = message;
+    if ($('live-camera-help')) $('live-camera-help').textContent = message;
+  }
+
+  function cameraErrorMessage(error) {
+    if (!error) return 'Camera could not start. Check that it is connected and not being used by another app.';
+    if (error.name === 'NotAllowedError' || error.name === 'SecurityError') {
+      return 'Camera permission was denied. Allow camera access in your browser settings, then retry.';
+    }
+    if (error.name === 'NotFoundError' || error.name === 'OverconstrainedError') {
+      return 'The selected camera is unavailable. Connect the webcam, refresh the list, and choose it again.';
+    }
+    if (error.name === 'NotReadableError') {
+      return 'The camera is already being used by another app. Close that app, then retry.';
+    }
+    if (error.name === 'TypeError') {
+      return 'Camera access requires a secure page (HTTPS) or localhost.';
+    }
+    return 'Camera could not start. Check that it is connected, then retry.';
+  }
+
+  function videoConstraintsFor(deviceId) {
+    var quality = { width: { ideal: 1280 }, height: { ideal: 720 } };
+    return deviceId ? Object.assign({ deviceId: { exact: deviceId } }, quality) : quality;
+  }
+
+  async function refreshCameras() {
+    var selects = cameraSelects();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+      setCameraHelp('This browser does not support camera detection. Open the app in a current browser over HTTPS or localhost.');
+      return [];
+    }
+    try {
+      var devices = await navigator.mediaDevices.enumerateDevices();
+      var cameras = devices.filter(function (device) { return device.kind === 'videoinput'; });
+      selects.forEach(function (select) {
+        var previous = selectedCameraId || select.value;
+        select.innerHTML = '<option value="">Default camera (browser choice)</option>';
+        cameras.forEach(function (camera, index) {
+          var option = document.createElement('option');
+          option.value = camera.deviceId;
+          option.textContent = camera.label || ('Camera ' + (index + 1));
+          select.appendChild(option);
+        });
+        select.value = cameras.some(function (camera) { return camera.deviceId === previous; }) ? previous : '';
+      });
+      setCameraHelp(cameras.length
+        ? cameras.length + ' camera' + (cameras.length === 1 ? '' : 's') + ' available. Select one to switch.'
+        : 'No camera found. Connect a webcam, allow camera access, then refresh.');
+      return cameras;
+    } catch (error) {
+      setCameraHelp('Could not list cameras. Check browser permission and try refreshing.');
+      return [];
+    }
+  }
+
+  async function prepareCameraSelection() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error('This browser does not support camera access.');
+    }
+    // Open briefly and immediately release the stream. This gets permission
+    // without locking the webcam before the live-scan screen is opened.
+    var probe = await navigator.mediaDevices.getUserMedia({
+      video: videoConstraintsFor(selectedCameraId),
+      audio: false
+    });
+    cameraPermissionGranted = true;
+    probe.getTracks().forEach(function (track) { track.stop(); });
+    var cameras = await refreshCameras();
+    if (!cameras.length) throw new Error('No camera was found.');
+  }
+
+  function stopCameraFeed() {
+    if (cameraStream) cameraStream.getTracks().forEach(function (track) { track.stop(); });
+    cameraStream = null;
+    $('camera-video').srcObject = null;
+  }
+
+  async function startCameraFeed() {
+    var video = $("camera-video");
+    var frame = $("camera-frame");
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      $("live-status-chip").textContent = "CAMERA UNSUPPORTED";
+      throw new Error("This browser does not support camera access.");
+    }
+    try {
+      stopCameraFeed();
+      var videoConstraints = videoConstraintsFor(selectedCameraId);
+      cameraStream = await navigator.mediaDevices.getUserMedia({
+        video: videoConstraints,
+        audio: false
+      });
+      video.srcObject = cameraStream;
+      await video.play();
+      frame.classList.remove("captured");
+      $("live-status-chip").textContent = "CAMERA LIVE · LOADING YOLO";
+      var activeTrack = cameraStream.getVideoTracks()[0];
+      if (activeTrack && activeTrack.getSettings) {
+        var activeDeviceId = activeTrack.getSettings().deviceId;
+        if (activeDeviceId) selectedCameraId = activeDeviceId;
+      }
+      await refreshCameras();
+      cameraSelects().forEach(function (select) { select.value = selectedCameraId; });
+      if (activeTrack) activeTrack.addEventListener('ended', function () {
+        if (!cameraSwitching && $('screen-live-scan').classList.contains('active')) {
+          $('live-status-chip').textContent = 'CAMERA DISCONNECTED';
+          if ($('live-camera-help')) $('live-camera-help').textContent = 'The camera disconnected. Connect a camera, refresh the list, and choose another device.';
+          refreshCameras();
+        }
+      });
+    } catch (error) {
+      $("live-status-chip").textContent = "CAMERA BLOCKED";
+      setCameraHelp(cameraErrorMessage(error));
+      throw error;
+    }
+  }
+
+  async function switchCamera(deviceId) {
+    selectedCameraId = deviceId || '';
+    cameraSwitching = true;
+    try {
+      await startCameraFeed();
+      $('live-status-chip').textContent = modelWorkerId ? 'YOLO ACTIVE' : 'CAMERA LIVE';
+    } catch (error) {
+      selectedCameraId = '';
+      await refreshCameras();
+      toast(cameraErrorMessage(error));
+    } finally {
+      cameraSwitching = false;
+    }
+  }
+
+  cameraSelects().forEach(function (select) {
+    select.addEventListener('change', function () {
+      selectedCameraId = select.value;
+      cameraSelects().forEach(function (other) { other.value = selectedCameraId; });
+      if ($('screen-live-scan').classList.contains('active')) switchCamera(selectedCameraId);
+    });
+  });
+  $('refresh-cameras').addEventListener('click', async function () {
+    if (!cameraPermissionGranted) {
+      try { await prepareCameraSelection(); }
+      catch (error) { setCameraHelp(cameraErrorMessage(error)); toast(cameraErrorMessage(error)); }
+    } else {
+      await refreshCameras();
+    }
+  });
+  $('live-refresh-cameras').addEventListener('click', refreshCameras);
+  if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+    navigator.mediaDevices.addEventListener('devicechange', function () {
+      clearTimeout(cameraDeviceChangeTimer);
+      cameraDeviceChangeTimer = setTimeout(function () {
+        refreshCameras();
+        setCameraHelp('Camera hardware changed. Choose the connected webcam from the list if needed.');
+      }, 250);
+    });
+  }
+
+  function captureCameraFrame() {
+    var video = $("camera-video");
+    var canvas = $("captured-canvas");
+    var frame = $("camera-frame");
+    if (!video.videoWidth) return;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+    frame.classList.add("captured");
+  }
+
+  async function startLiveScan() {
+    liveDetections = [];
+    var frame = $("camera-frame");
+    Array.prototype.forEach.call(frame.querySelectorAll(".det-box"), function (b) { b.remove(); });
+    $("live-count").textContent = "0";
+    $("live-status-chip").textContent = "LOADING YOLO";
+    clearInterval(liveInterval);
+    try {
+      await Promise.all([startCameraFeed(), ensureYoloModel()]);
+      $("live-status-chip").textContent = "YOLO ACTIVE";
+      var inferBusy = false;
+      liveInterval = setInterval(async function () {
+        var video = $("camera-video");
+        if (inferBusy || !modelWorkerId || !video.videoWidth) return;
+        inferBusy = true;
+        try { applyPredictions(await inferenceEngine.infer(modelWorkerId, video)); }
+        catch (error) { $("live-status-chip").textContent = "INFERENCE ERROR"; }
+        finally { inferBusy = false; }
+      }, 650);
+    } catch (error) {
+      stopCameraFeed();
+      renderConnectState("failed");
+      showScreen("connect");
+      toast(error && error.message ? error.message : "Could not start camera or YOLO model.");
+    }
+  }
+
+  function applyPredictions(result) {
+    var frame = $("camera-frame");
+    Array.prototype.forEach.call(frame.querySelectorAll(".det-box"), function (b) { b.remove(); });
+    var preds = Array.isArray(result) ? result : (result && (result.predictions || result.detections)) || [];
+    var video = $("camera-video"), vw = video.videoWidth || 640, vh = video.videoHeight || 480;
+    liveDetections = preds.map(function (p, i) {
+      var conf = Number(p.confidence != null ? p.confidence : p.score || 0);
+      if (conf <= 1) conf *= 100;
+      var cls = String(p.class || p.label || p.className || p.class_name || "larva");
+      var x = Number(p.x || 0), y = Number(p.y || 0), w = Number(p.width || 0), h = Number(p.height || 0);
+      if (Math.max(x, y, w, h) <= 1) { x *= vw; y *= vh; w *= vw; h *= vh; }
+      var left = Math.max(0, Math.min(100, (x - w / 2) / vw * 100));
+      var top = Math.max(0, Math.min(100, (y - h / 2) / vh * 100));
+      var box = document.createElement("div");
+      box.className = "det-box";
+      box.style.left = left + "%";
+      box.style.top = top + "%";
+      box.style.width = Math.max(1, Math.min(100 - left, w / vw * 100)) + "%";
+      box.style.height = Math.max(1, Math.min(100 - top, h / vh * 100)) + "%";
+      var label = document.createElement("span");
+      label.className = "tag";
+      label.textContent = cls + " · " + Math.round(conf) + "%";
+      box.appendChild(label);
+      frame.appendChild(box);
+      return { label: "Larva " + pad(i + 1), cls: cls, conf: Math.round(conf), x: x, y: y, width: w, height: h };
+    });
+    $("live-count").textContent = liveDetections.length;
+    $("live-status-chip").textContent = liveDetections.length ? "YOLO ACTIVE · DETECTED" : "YOLO ACTIVE · NONE FOUND";
+  }
+
+  $("capture-btn").addEventListener("click", function () {
+    clearInterval(liveInterval);
+    captureCameraFrame();
+    if (!$('captured-canvas').width) { toast("Camera frame is not ready yet."); return; }
+    stopCameraFeed();
+    runProcessing();
+  });
+
+  /* ---------------- processing ---------------- */
+  function runProcessing() {
+    showScreen("processing");
+    ["proc-1", "proc-2", "proc-3", "proc-4"].forEach(function (id) {
+      $(id).classList.remove("done", "current");
+    });
+    var steps = ["proc-1", "proc-2", "proc-3", "proc-4"];
+    var i = 0;
+    function tick() {
+      if (i > 0) $(steps[i - 1]).classList.replace("current", "done");
+      if (i < steps.length) {
+        $(steps[i]).classList.add("current");
+        i++;
+        setTimeout(tick, 480);
+      } else {
+        finishCapture();
+      }
+    }
+    tick();
+  }
+
+  function finishCapture() {
+    var dets = liveDetections.slice();
+    var sum = summarize(dets);
+    current.detections = dets;
+    current.total = dets.length;
+    current.avgConfidence = sum.avg;
+    current.dominantClass = sum.dominant;
+    current.reviewed = false;
+    current.analysisTime = "Browser inference";
+
+    history.unshift(current);
+    saveHistory();
+    viewingFromHistory = false;
+    renderResults(current);
+    showScreen("results");
+    toast("Sample " + current.id + " saved to history.");
+  }
+
+  /* ---------------- results ---------------- */
+  function renderResults(rec) {
+    $("res-sample-id").textContent = rec.id;
+    $("res-timestamp").textContent = rec.timestamp;
+    $("res-total").textContent = rec.total;
+    $("res-avg-conf").textContent = rec.total ? rec.avgConfidence + "%" : "—";
+    $("res-time").textContent = rec.analysisTime || "—";
+    $("res-dominant").textContent = rec.dominantClass;
+    $("res-dominant-conf").textContent = rec.total ? Math.round(rec.avgConfidence) + "%" : "—";
+
+    var body = $("res-table-body");
+    body.innerHTML = "";
+    rec.detections.forEach(function (d) {
+      var tr = document.createElement("tr");
+      [d.label, d.conf + "%", d.cls].forEach(function (value, idx) {
+        var td = document.createElement("td");
+        td.textContent = value;
+        if (idx === 2) td.className = "cls";
+        tr.appendChild(td);
+      });
+      body.appendChild(tr);
+    });
+
+    renderAIDetails(rec);
+  }
+
+  function renderAIDetails(rec) {
+    $("ai-class").textContent = rec.dominantClass;
+    var conf = rec.total ? rec.avgConfidence : 0;
+    $("ai-conf-bar").style.width = conf + "%";
+    $("ai-conf-text").textContent = conf + "% confidence";
+
+    var list = $("ai-explanation-list");
+    list.innerHTML =
+      "<li><b>Count:</b> YOLO returned " + rec.total + " detection" + (rec.total === 1 ? "" : "s") + " for the captured frame.</li>" +
+      "<li><b>Dominant class:</b> " + rec.dominantClass + ", based on the class counts returned by the model.</li>" +
+      "<li><b>Average confidence:</b> " + (rec.total ? rec.avgConfidence + "%" : "No detections") + ".</li>" +
+      "<li><b>Research note:</b> output is limited to the model's trained classes and should be treated as provisional.</li>";
+  }
+
+  $("results-back").addEventListener("click", function () {
+    showScreen(viewingFromHistory ? "history" : "dashboard");
+  });
+
+  /* ---------------- history ---------------- */
+  function renderHistory() {
+    var list = $("history-list");
+    if (!history.length) {
+      list.innerHTML = '<div class="hist-empty">No samples captured yet. Start a scan to build your history.</div>';
+      return;
+    }
+    list.innerHTML = "";
+    history.forEach(function (rec, idx) {
+      var item = document.createElement("div");
+      item.className = "hist-item";
+      var open = document.createElement("button");
+      open.type = "button";
+      open.className = "hist-open";
+      open.innerHTML =
+        '<div><div class="hid">' + rec.id + '</div>' +
+        '<div class="meta">' + rec.timestamp + (rec.location ? " · " + rec.location : "") + '</div></div>' +
+        '<div class="count">' + rec.total + '<small>' + (rec.reviewed ? "REVIEWED" : "PENDING") + '</small></div>';
+      open.addEventListener("click", function () {
+        current = rec;
+        viewingFromHistory = true;
+        renderResults(rec);
+        showScreen("results");
+      });
+      var remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "hist-delete";
+      remove.textContent = "Delete";
+      remove.setAttribute("aria-label", "Delete sample " + rec.id);
+      remove.addEventListener("click", function () {
+        if (!window.confirm("Delete saved sample " + rec.id + "? This cannot be undone.")) return;
+        history.splice(idx, 1);
+        if (current === rec) current = null;
+        saveHistory();
+        renderHistory();
+        renderDashboard();
+        toast("Sample " + rec.id + " deleted.");
+      });
+      item.appendChild(open);
+      item.appendChild(remove);
+      list.appendChild(item);
+    });
+  }
+
+  /* ---------------- downloads ---------------- */
+  function buildPrintReport(rec) {
+    $("pr-sub").textContent = rec.id + " · " + rec.timestamp + (rec.location ? " · " + rec.location : "");
+    $("pr-total").textContent = rec.total;
+    $("pr-avg").textContent = rec.total ? rec.avgConfidence + "%" : "—";
+    $("pr-class").textContent = rec.dominantClass;
+    $("pr-insight-summary").textContent = rec.total
+      ? "The model detected " + rec.total + " larva" + (rec.total === 1 ? "" : "e") + " in this sample. Its leading predicted class is " + rec.dominantClass + "."
+      : "The model found no larvae in the captured frame, so it could not assign a dominant class.";
+    var insightList = $("pr-insight-list");
+    insightList.innerHTML = "";
+    [
+      "Detection count: " + rec.total + " object" + (rec.total === 1 ? "" : "s") + " returned by YOLO.",
+      "Dominant class: " + rec.dominantClass + ", based on the class counts returned by the model.",
+      "Average confidence: " + (rec.total ? rec.avgConfidence + "%" : "not available because there were no detections."),
+      "Research note: predictions are limited to the model's trained classes and should be treated as provisional."
+    ].forEach(function (insight) {
+      var li = document.createElement("li");
+      li.textContent = insight;
+      insightList.appendChild(li);
+    });
+    var body = $("pr-table-body");
+    body.innerHTML = "";
+    rec.detections.forEach(function (d) {
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td>" + d.label + "</td><td>" + d.conf + "%</td><td>" + d.cls + "</td>";
+      body.appendChild(tr);
+    });
+  }
+
+  function downloadPDF() {
+    if (!current) { toast("No results to export yet."); return; }
+    buildPrintReport(current);
+    setTimeout(function () { window.print(); }, 60);
+  }
+
+  function downloadCSV() {
+    if (!current) { toast("No results to export yet."); return; }
+    var rows = [["Sample ID", current.id], ["Location", current.location || ""], ["Timestamp", current.timestamp], [], ["Detection", "Confidence", "Class"]];
+    current.detections.forEach(function (d) { rows.push([d.label, d.conf + "%", d.cls]); });
+    var csv = rows.map(function (r) { return r.map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(","); }).join("\n");
+    var blob = new Blob([csv], { type: "text/csv" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = current.id + "-results.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast("CSV downloaded.");
+  }
+
+  $("btn-download-pdf").addEventListener("click", downloadPDF);
+  $("ai-download-pdf").addEventListener("click", downloadPDF);
+  $("btn-download-csv").addEventListener("click", downloadCSV);
+
+  /* ---------------- manual review modal ---------------- */
+  function openReview() {
+    if (!current) { toast("No results to review yet."); return; }
+    reviewTarget = current;
+    $("review-modal").classList.add("show");
+    Array.prototype.forEach.call(document.querySelectorAll("#review-modal .box"), function (b) {
+      b.classList.remove("checked");
+    });
+  }
+  function closeReview() { $("review-modal").classList.remove("show"); }
+
+  $("btn-open-review").addEventListener("click", openReview);
+  $("ai-open-review").addEventListener("click", openReview);
+  $("close-review").addEventListener("click", closeReview);
+  $("review-modal").addEventListener("click", function (e) { if (e.target === $("review-modal")) closeReview(); });
+
+  document.querySelectorAll("#review-modal .check-list li").forEach(function (li) {
+    li.addEventListener("click", function () {
+      li.querySelector(".box").classList.toggle("checked");
+    });
+  });
+
+  $("mark-reviewed").addEventListener("click", function () {
+    if (reviewTarget) reviewTarget.reviewed = true;
+    saveHistory();
+    closeReview();
+    toast("Marked as reviewed.");
+    if (!viewingFromHistory) renderHistory();
+  });
+
+  /* ---------------- init ---------------- */
+  renderConnectionStatus();
+  renderDashboard();
+})();
+</script>
+<script src="auth.js"></script>
+</body>
+</html>
