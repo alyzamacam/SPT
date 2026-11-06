@@ -510,7 +510,10 @@
   /* live camera */
   .camera-frame {
     position: relative;
-    height: 300px;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    max-height: 300px;
     border-radius: var(--radius-m);
     overflow: hidden;
     background:
@@ -526,11 +529,25 @@
     inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: fill;
+    /* Preserve the source camera ratio. Never horizontally stretch a mobile feed. */
+    object-fit: contain;
+    background: #102d20;
   }
   .camera-frame canvas { display: none; }
   .camera-frame.captured video { display: none; }
   .camera-frame.captured canvas { display: block; }
+
+  /* Phones commonly provide a portrait camera stream, so give it a taller viewfinder. */
+  @media (max-width: 600px) and (orientation: portrait) {
+    .camera-frame {
+      aspect-ratio: 3 / 4;
+      max-height: min(52dvh, 440px);
+    }
+  }
+  /* A phone held sideways uses the same wide framing as a laptop webcam. */
+  @media (max-width: 900px) and (orientation: landscape) {
+    .camera-frame { aspect-ratio: 16 / 9; max-height: min(52dvh, 300px); }
+  }
   .camera-frame .scanline,
   .camera-frame .det-box { z-index: 2; }
   .scanline {
