@@ -529,8 +529,8 @@
     inset: 0;
     width: 100%;
     height: 100%;
-    /* Preserve the source camera ratio. Never horizontally stretch a mobile feed. */
-    object-fit: contain;
+    /* Fill the viewfinder without stretching. Excess image is cropped, never distorted. */
+    object-fit: cover;
     background: #102d20;
   }
   .camera-frame canvas { display: none; }
@@ -2032,14 +2032,22 @@
       var cls = String(p.class || p.label || p.className || p.class_name || "larva");
       var x = Number(p.x || 0), y = Number(p.y || 0), w = Number(p.width || 0), h = Number(p.height || 0);
       if (Math.max(x, y, w, h) <= 1) { x *= vw; y *= vh; w *= vw; h *= vh; }
-      var left = Math.max(0, Math.min(100, (x - w / 2) / vw * 100));
-      var top = Math.max(0, Math.min(100, (y - h / 2) / vh * 100));
+      /* Match bounding boxes to the proportional object-fit: cover camera preview. */
+      var frameWidth = frame.clientWidth || vw, frameHeight = frame.clientHeight || vh;
+      var scale = Math.max(frameWidth / vw, frameHeight / vh);
+      var offsetX = (frameWidth - vw * scale) / 2;
+      var offsetY = (frameHeight - vh * scale) / 2;
+      var displayLeft = (x - w / 2) * scale + offsetX;
+      var displayTop = (y - h / 2) * scale + offsetY;
+      var displayWidth = w * scale, displayHeight = h * scale;
+      var left = Math.max(0, Math.min(100, displayLeft / frameWidth * 100));
+      var top = Math.max(0, Math.min(100, displayTop / frameHeight * 100));
       var box = document.createElement("div");
       box.className = "det-box";
       box.style.left = left + "%";
       box.style.top = top + "%";
-      box.style.width = Math.max(1, Math.min(100 - left, w / vw * 100)) + "%";
-      box.style.height = Math.max(1, Math.min(100 - top, h / vh * 100)) + "%";
+      box.style.width = Math.max(1, Math.min(100 - left, displayWidth / frameWidth * 100)) + "%";
+      box.style.height = Math.max(1, Math.min(100 - top, displayHeight / frameHeight * 100)) + "%";
       var label = document.createElement("span");
       label.className = "tag";
       label.textContent = cls + " · " + Math.round(conf) + "%";
